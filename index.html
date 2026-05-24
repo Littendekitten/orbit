@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpaceStar 0.01 Interface</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0f172a;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            text-align: center;
+            background: #1e293b;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            width: 80%;
+            max-width: 500px;
+        }
+        h1 { color: #38bdf8; }
+        input {
+            width: 80%;
+            padding: 10px;
+            margin: 20px 0;
+            border-radius: 5px;
+            border: none;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #38bdf8;
+            border: none;
+            border-radius: 5px;
+            color: #0f172a;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        #response {
+            margin-top: 20px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🛰️ SpaceStar 0.01</h1>
+        <p>Welkom bij het dashboard van je getrainde AI.</p>
+        <input type="text" id="userInput" placeholder="Stel je vraag aan SpaceStar...">
+        <button onclick="askOrbit()">Vraag verzenden</button>
+        <div id="response"></div>
+    </div>
+
+    <script>
+        function askOrbit() {
+            const input = document.getElementById('userInput').value;
+            const res = document.getElementById('response');
+            res.innerHTML = "🛰️ Orbit denkt na... (" + input + ")";
+            // Hier zou je later een koppeling kunnen maken met een backend die je model aanroept
+        }
+    </script>
+</body>
+</html>
