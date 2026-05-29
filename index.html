@@ -2,74 +2,207 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Orbit AI Chat</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Orbit AI Terminal</title>
     <style>
-        /* Algemene styling */
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; display: flex; flex-direction: column; align-items: center; padding: 20px; margin: 0; }
-        #chat-container { width: 100%; max-width: 800px; background: white; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
-        .header { background: #2c3e50; color: white; padding: 15px 20px; font-size: 1.2em; font-weight: bold; }
+        /* CSS Reset & Basis */
+        * { box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            background-color: #131314; /* Gemini Dark Background */
+            color: #e3e3e3; 
+            margin: 0; 
+            display: flex; 
+            justify-content: center; 
+            height: 100vh;
+            overflow: hidden; /* Voorkomt scrollen van de hele pagina op mobiel */
+        }
         
-        /* Chat venster */
-        #chat-box { height: 500px; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
-        .message { max-width: 85%; padding: 12px 16px; border-radius: 8px; line-height: 1.5; word-wrap: break-word; }
-        .user-msg { background-color: #d1e7dd; align-self: flex-end; border-bottom-right-radius: 0; color: #0f5132; }
-        .bot-msg { background-color: #f8f9fa; align-self: flex-start; border-bottom-left-radius: 0; border: 1px solid #e9ecef; color: #333; }
-        
-        /* Input gebied */
-        .input-area { display: flex; padding: 15px; background: #fff; border-top: 1px solid #eee; }
-        input { flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 1em; outline: none; }
-        input:focus { border-color: #2c3e50; }
-        button.send-btn { background: #2c3e50; color: white; border: none; padding: 12px 20px; margin-left: 10px; border-radius: 6px; cursor: pointer; font-size: 1em; transition: 0.2s; }
-        button.send-btn:hover { background: #1a252f; }
+        #app-container { 
+            width: 100%; 
+            max-width: 900px; 
+            display: flex; 
+            flex-direction: column; 
+            height: 100%; 
+        }
 
-        /* --- DE MAGIE VOOR CODE BLOKKEN --- */
-        .code-container { background: #1e1e1e; border-radius: 8px; margin: 10px 0; overflow: hidden; border: 1px solid #333; }
-        .code-header { background: #2d2d2d; padding: 8px 15px; display: flex; justify-content: space-between; align-items: center; color: #ccc; font-size: 0.85em; font-family: sans-serif; border-bottom: 1px solid #444; }
-        .code-content { margin: 0; padding: 15px; overflow-x: auto; color: #d4d4d4; font-family: 'Courier New', Courier, monospace; font-size: 0.9em; white-space: pre-wrap; }
-        .copy-btn { background: #4caf50; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.9em; transition: 0.2s; }
-        .copy-btn:hover { background: #45a049; }
-        .copy-btn.copied { background: #2e7d32; }
+        /* Header styling */
+        .header { 
+            padding: 15px 20px; 
+            font-size: 1.2em; 
+            font-weight: 500; 
+            border-bottom: 1px solid #333; 
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Chat venster */
+        #chat-box { 
+            flex-grow: 1; 
+            overflow-y: auto; 
+            padding: 20px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 24px; 
+            scroll-behavior: smooth;
+        }
+        
+        /* Berichten algemeen */
+        .message { 
+            display: flex; 
+            flex-direction: column; 
+            line-height: 1.6; 
+            font-size: 1rem;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        /* Jij (Gebruiker) styling */
+        .user-msg { 
+            align-self: flex-end; 
+            background-color: #303134; 
+            padding: 12px 18px; 
+            border-radius: 20px; 
+            border-bottom-right-radius: 4px;
+            max-width: 85%; 
+        }
+
+        /* Orbit styling */
+        .bot-msg { 
+            align-self: flex-start; 
+            max-width: 100%; 
+        }
+        .bot-msg b { color: #8ab4f8; font-size: 1.1em; display: inline-block; margin-bottom: 5px; } 
+
+        /* Input gebied */
+        .input-area { 
+            padding: 15px 20px; 
+            padding-bottom: 30px; /* Extra ruimte voor iPhone balkje onderin */
+            background: #131314; 
+            display: flex; 
+            gap: 10px; 
+            border-top: 1px solid #333;
+        }
+        
+        input { 
+            flex: 1; 
+            background-color: #1e1f20; 
+            color: white; 
+            border: 1px solid #444; 
+            padding: 14px 20px; 
+            border-radius: 25px; 
+            font-size: 1rem; 
+            outline: none; 
+            transition: 0.2s border-color; 
+        }
+        input:focus { border-color: #8ab4f8; }
+        
+        button.send-btn { 
+            background-color: transparent; 
+            color: #8ab4f8; 
+            border: none; 
+            font-weight: 600; 
+            cursor: pointer; 
+            padding: 0 15px; 
+            font-size: 1rem;
+            transition: 0.2s color;
+        }
+        button.send-btn:hover { color: #aecbfa; }
+
+        /* Code Blokken Styling */
+        .code-container { 
+            background: #1e1e1e; 
+            border-radius: 12px; 
+            margin: 12px 0; 
+            overflow: hidden; 
+            border: 1px solid #333; 
+        }
+        .code-header { 
+            background: #2d2d2d; 
+            padding: 8px 15px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            color: #aaa; 
+            font-size: 0.85rem; 
+        }
+        .code-content { 
+            margin: 0; 
+            padding: 15px; 
+            overflow-x: auto; 
+            font-family: 'Consolas', 'Courier New', monospace; 
+            font-size: 0.9rem; 
+            color: #d4d4d4; 
+        }
+        .copy-btn { 
+            background: transparent; 
+            color: #aaa; 
+            border: 1px solid #555; 
+            padding: 4px 10px; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            transition: 0.2s; 
+        }
+        .copy-btn:hover { background: #444; color: white; }
+        .copy-btn.copied { background: #8ab4f8; color: #131314; border-color: #8ab4f8; }
+
+        /* Animaties */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Mobiele optimalisatie */
+        @media (max-width: 600px) {
+            .input-area { padding: 10px; padding-bottom: 20px; }
+            .user-msg { max-width: 90%; }
+            .header { padding: 10px 15px; font-size: 1.1em; }
+        }
     </style>
 </head>
 <body>
 
-    <div id="chat-container">
-        <div class="header">🛰️ Orbit AI Terminal</div>
-        <div id="chat-box"></div>
+    <div id="app-container">
+        <div class="header">✨ Orbit AI</div>
+        
+        <div id="chat-box">
+            <div class="message bot-msg"><b>Orbit</b><br>Hallo! Ik ben klaar voor actie. Wat gaan we vandaag bouwen?</div>
+        </div>
+        
         <div class="input-area">
-            <input type="text" id="user-input" placeholder="Stel een vraag aan Orbit (bijv. 'schrijf een python script')..." onkeypress="handleEnter(event)">
-            <button class="send-btn" onclick="sendMessage()">Verzend</button>
+            <input type="text" id="user-input" placeholder="Vraag Orbit iets..." onkeypress="handleEnter(event)" autocomplete="off">
+            <button class="send-btn" onclick="sendMessage()">Stuur</button>
         </div>
     </div>
 
     <script>
         // Jouw vaste Ngrok URL
-        const BACKEND_URL = "[https://roaming-travesty-retold.ngrok-free.dev](https://roaming-travesty-retold.ngrok-free.dev)";
+        const BACKEND_URL = "https://roaming-travesty-retold.ngrok-free.dev";
 
-        // Functie om enter toets op te vangen
         function handleEnter(event) {
             if (event.key === "Enter") {
                 sendMessage();
             }
         }
 
-        // DE PARSER: Zoekt naar ``` code ``` en maakt er een mooi blok van
+        // De nieuwe, slimmere parser
         function formatOrbitText(text) {
-            // Regex zoekt naar alles tussen 3 backticks
+            const codeBlocks = [];
             const codeRegex = /```([a-zA-Z]*)\n([\s\S]*?)```/g;
             
-            // Vervang de ruwe tekst door HTML
-            let formattedText = text.replace(codeRegex, function(match, language, code) {
-                const langLabel = language ? language.toUpperCase() : 'CODE';
-                
-                // Beveiliging: zorg dat HTML in de code niet de website breekt (< en > vervangen)
-                const safeCode = code.replace(/</g, '&lt;').replace(/>/g, '&gt;').trim();
-                
-                // Genereer een uniek ID voor de kopieer-knop
-                const uniqueId = 'code-' + Math.random().toString(36).substr(2, 9);
+            // Stap 1: Haal de codeblokken er tijdelijk uit zodat normale enters ze niet kapot maken
+            let tempText = text.replace(codeRegex, function(match, language, code) {
+                codeBlocks.push({ language, code });
+                return `___CODEBLOCK_${codeBlocks.length - 1}___`;
+            });
 
-                return `
+            // Stap 2: Zet gewone enters om in HTML <br> tags
+            tempText = tempText.replace(/\n/g, '<br>');
+
+            // Stap 3: Zet de codeblokken netjes terug met de nieuwe styling
+            codeBlocks.forEach((block, index) => {
+                const langLabel = block.language ? block.language.toUpperCase() : 'CODE';
+                const safeCode = block.code.replace(/</g, '&lt;').replace(/>/g, '&gt;').trim();
+                const uniqueId = 'code-' + Math.random().toString(36).substr(2, 9);
+                
+                const codeHTML = `
                     <div class="code-container">
                         <div class="code-header">
                             <span>${langLabel}</span>
@@ -78,18 +211,16 @@
                         <pre class="code-content" id="${uniqueId}">${safeCode}</pre>
                     </div>
                 `;
+                tempText = tempText.replace(`___CODEBLOCK_${index}___`, codeHTML);
             });
 
-            // Vervang eventuele losse enters door HTML breaks zodat normale tekst ook netjes blijft
-            return formattedText.replace(/\n/g, '<br>');
+            return tempText;
         }
 
-        // De Kopieer functie
         function copyToClipboard(elementId, button) {
             const codeText = document.getElementById(elementId).innerText;
             navigator.clipboard.writeText(codeText).then(() => {
-                // Verander de knop tijdelijk voor visuele feedback
-                button.innerText = 'Gekopieerd! ✔';
+                button.innerText = 'Gekopieerd!';
                 button.classList.add('copied');
                 
                 setTimeout(() => {
@@ -108,7 +239,7 @@
 
             if (!message) return;
 
-            // Toon eigen bericht met de nieuwe styling
+            // Toon jouw bericht
             chatBox.innerHTML += `<div class="message user-msg">${message}</div>`;
             inputField.value = '';
             chatBox.scrollTop = chatBox.scrollHeight;
@@ -116,22 +247,26 @@
             try {
                 const response = await fetch(`${BACKEND_URL}/chat`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'ngrok-skip-browser-warning': 'true' // Ngrok Bypass!
+                    },
                     body: JSON.stringify({ message: message })
                 });
 
+                if (!response.ok) throw new Error("Netwerk respons was niet oké.");
+
                 const data = await response.json();
-                
-                // Stuur Orbit's antwoord door de formatter!
                 const formattedReply = formatOrbitText(data.reply);
 
-                // Toon het geformatteerde antwoord
-                chatBox.innerHTML += `<div class="message bot-msg"><b>Orbit:</b><br>${formattedReply}</div>`;
+                // Toon Orbit's antwoord
+                chatBox.innerHTML += `<div class="message bot-msg"><b>Orbit</b><br>${formattedReply}</div>`;
                 chatBox.scrollTop = chatBox.scrollHeight;
                 
             } catch (error) {
-                chatBox.innerHTML += `<div class="message bot-msg" style="color:red;"><b>Systeem Fout:</b> Kan geen verbinding maken met de Orbit server. Check of Ngrok en je app.py draaien.</div>`;
+                chatBox.innerHTML += `<div class="message bot-msg" style="color:#ff8a8a;"><b>Systeemwaarschuwing</b><br>Kan geen verbinding maken met Orbit. Draait je Ngrok tunnel nog?</div>`;
                 console.error("Error:", error);
+                chatBox.scrollTop = chatBox.scrollHeight;
             }
         }
     </script>
