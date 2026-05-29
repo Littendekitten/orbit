@@ -2,44 +2,42 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <title>SpaceStar AI Interface</title>
+    <title>Orbit AI</title>
     <style>
-        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #343541; color: #ececf1; }
-        .chat-container { display: flex; flex-direction: column; height: 100vh; max-width: 800px; margin: 0 auto; }
-        #chat-window { flex: 1; overflow-y: auto; padding: 20px; }
-        .message { padding: 20px; border-radius: 5px; margin-bottom: 5px; }
-        .user { background-color: #343541; }
-        .ai { background-color: #444654; }
-        .input-area { padding: 20px; border-top: 1px solid #4d4d4f; background: #343541; display: flex; gap: 10px; }
-        input { flex: 1; padding: 12px; border-radius: 5px; border: 1px solid #565869; background: #40414f; color: white; }
-        button { padding: 10px 20px; background: #19c37d; border: none; color: white; border-radius: 5px; cursor: pointer; }
+        body { background: #1a1a1a; color: #fff; font-family: sans-serif; display: flex; justify-content: center; padding-top: 50px; }
+        .chat-box { width: 90%; max-width: 600px; background: #2d2d2d; padding: 20px; border-radius: 10px; }
+        #chat { height: 400px; overflow-y: auto; border-bottom: 1px solid #444; margin-bottom: 10px; }
+        input { width: 75%; padding: 10px; border-radius: 5px; border: none; }
+        button { padding: 10px; background: #007bff; border: none; color: white; cursor: pointer; border-radius: 5px; }
     </style>
 </head>
 <body>
-
-<div class="chat-container">
-    <div id="chat-window">
-        <div class="message ai">🛰️ Orbit: Hallo! Waar kan ik je vandaag bij helpen?</div>
+    <div class="chat-box">
+        <div id="chat"></div>
+        <input type="text" id="userInput" placeholder="Vraag Orbit wat...">
+        <button onclick="send()">Verzend</button>
     </div>
-    <div class="input-area">
-        <input type="text" id="userInput" placeholder="Typ je bericht aan SpaceStar...">
-        <button onclick="sendMessage()">Verzend</button>
-    </div>
-</div>
 
-<script>
-    function sendMessage() {
-        const input = document.getElementById('userInput');
-        const chat = document.getElementById('chat-window');
-        if (!input.value) return;
+    <script>
+        const BACKEND_URL = "https://JE_TUNNEL_URL_HIER.trycloudflare.com"; // <-- DIT MOET JE AANPASSEN
 
-        chat.innerHTML += `<div class="message user">👤 Jij: ${input.value}</div>`;
-        
-        // Hier zou normaal de verbinding met je Python script komen
-        chat.innerHTML += `<div class="message ai">🛰️ Orbit denkt na...</div>`;
-        input.value = '';
-        chat.scrollTop = chat.scrollHeight;
-    }
-</script>
+        async function send() {
+            const input = document.getElementById('userInput');
+            const chat = document.getElementById('chat');
+            const message = input.value;
+            
+            chat.innerHTML += `<p><b>Jij:</b> ${message}</p>`;
+            input.value = '';
+
+            const response = await fetch(`${BACKEND_URL}/chat`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ message: message })
+            });
+
+            const data = await response.json();
+            chat.innerHTML += `<p><b>Orbit:</b> ${data.reply}</p>`;
+        }
+    </script>
 </body>
 </html>
