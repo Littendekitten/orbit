@@ -2,201 +2,317 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Orbit AI Terminal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orbit AI Dashboard</title>
     <style>
-        /* CSS Reset & Basis */
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-            background-color: #131314; /* Gemini Dark Background */
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; 
+            background-color: #131314; 
             color: #e3e3e3; 
-            margin: 0; 
             display: flex; 
-            justify-content: center; 
-            height: 100vh;
-            overflow: hidden; /* Voorkomt scrollen van de hele pagina op mobiel */
-        }
-        
-        #app-container { 
-            width: 100%; 
-            max-width: 900px; 
-            display: flex; 
-            flex-direction: column; 
-            height: 100%; 
+            height: 100vh; 
+            overflow: hidden;
         }
 
-        /* Header styling */
-        .header { 
-            padding: 15px 20px; 
-            font-size: 1.2em; 
-            font-weight: 500; 
-            border-bottom: 1px solid #333; 
+        /* --- SIDEBAR (Gemini Stijl) --- */
+        #sidebar {
+            width: 260px;
+            background-color: #1e1f20;
             display: flex;
-            align-items: center;
-            gap: 10px;
+            flex-direction: column;
+            padding: 15px;
+            border-right: 1px solid #333;
+            transition: 0.3s;
         }
+        .new-chat-btn {
+            background: #2a2b2d;
+            color: #8ab4f8;
+            border: 1px solid #444;
+            padding: 12px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-bottom: 20px;
+            text-align: center;
+            transition: 0.2s;
+        }
+        .new-chat-btn:hover { background: #333537; }
+        
+        .chat-list-title {
+            font-size: 0.8rem;
+            color: #aaa;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            padding-left: 5px;
+        }
+        #chat-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .chat-list-item {
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: 0.2s;
+        }
+        .chat-list-item:hover { background-color: #2a2b2d; }
+        .chat-list-item.active { background-color: #004a77; color: #c2e7ff; }
 
-        /* Chat venster */
+        /* --- MAIN CHAT AREA --- */
+        #main-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        .header { 
+            padding: 18px 24px; 
+            font-size: 1.25rem; 
+            border-bottom: 1px solid #333; 
+            font-weight: 500;
+        }
         #chat-box { 
             flex-grow: 1; 
             overflow-y: auto; 
-            padding: 20px; 
+            padding: 24px; 
             display: flex; 
             flex-direction: column; 
             gap: 24px; 
-            scroll-behavior: smooth;
         }
         
-        /* Berichten algemeen */
-        .message { 
-            display: flex; 
-            flex-direction: column; 
-            line-height: 1.6; 
-            font-size: 1rem;
-            animation: fadeIn 0.3s ease-in-out;
-        }
-
-        /* Jij (Gebruiker) styling */
+        /* Berichten */
+        .message { display: flex; flex-direction: column; line-height: 1.6; }
         .user-msg { 
             align-self: flex-end; 
             background-color: #303134; 
-            padding: 12px 18px; 
+            padding: 12px 20px; 
             border-radius: 20px; 
             border-bottom-right-radius: 4px;
-            max-width: 85%; 
+            max-width: 80%; 
         }
+        .bot-msg { align-self: flex-start; max-width: 100%; }
+        .bot-msg b { color: #8ab4f8; font-size: 1.05rem; }
 
-        /* Orbit styling */
-        .bot-msg { 
-            align-self: flex-start; 
-            max-width: 100%; 
+        /* Input Balk */
+        .input-container {
+            padding: 20px;
+            background: #131314;
         }
-        .bot-msg b { color: #8ab4f8; font-size: 1.1em; display: inline-block; margin-bottom: 5px; } 
-
-        /* Input gebied */
         .input-area { 
-            padding: 15px 20px; 
-            padding-bottom: 30px; /* Extra ruimte voor iPhone balkje onderin */
-            background: #131314; 
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #1e1f20; 
+            border: 1px solid #444; 
+            border-radius: 30px; 
             display: flex; 
-            gap: 10px; 
-            border-top: 1px solid #333;
+            align-items: center;
+            padding: 6px 15px;
         }
-        
         input { 
             flex: 1; 
-            background-color: #1e1f20; 
+            background: transparent;
             color: white; 
-            border: 1px solid #444; 
-            padding: 14px 20px; 
-            border-radius: 25px; 
+            border: none;
+            padding: 12px; 
             font-size: 1rem; 
             outline: none; 
-            transition: 0.2s border-color; 
         }
-        input:focus { border-color: #8ab4f8; }
-        
         button.send-btn { 
-            background-color: transparent; 
+            background: transparent; 
             color: #8ab4f8; 
             border: none; 
             font-weight: 600; 
             cursor: pointer; 
-            padding: 0 15px; 
+            padding: 0 10px;
             font-size: 1rem;
-            transition: 0.2s color;
         }
         button.send-btn:hover { color: #aecbfa; }
 
-        /* Code Blokken Styling */
-        .code-container { 
-            background: #1e1e1e; 
-            border-radius: 12px; 
-            margin: 12px 0; 
-            overflow: hidden; 
-            border: 1px solid #333; 
-        }
-        .code-header { 
-            background: #2d2d2d; 
-            padding: 8px 15px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            color: #aaa; 
-            font-size: 0.85rem; 
-        }
-        .code-content { 
-            margin: 0; 
-            padding: 15px; 
-            overflow-x: auto; 
-            font-family: 'Consolas', 'Courier New', monospace; 
-            font-size: 0.9rem; 
-            color: #d4d4d4; 
-        }
-        .copy-btn { 
-            background: transparent; 
-            color: #aaa; 
-            border: 1px solid #555; 
-            padding: 4px 10px; 
-            border-radius: 6px; 
-            cursor: pointer; 
-            transition: 0.2s; 
-        }
+        /* Code Blokken */
+        .code-container { background: #1e1e1e; border-radius: 12px; margin: 12px 0; overflow: hidden; border: 1px solid #333; }
+        .code-header { background: #2d2d2d; padding: 8px 15px; display: flex; justify-content: space-between; align-items: center; color: #aaa; font-size: 0.8rem; }
+        .code-content { margin: 0; padding: 15px; overflow-x: auto; font-family: 'Consolas', monospace; font-size: 0.9rem; color: #d4d4d4; }
+        .copy-btn { background: transparent; color: #aaa; border: 1px solid #555; padding: 4px 8px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; }
         .copy-btn:hover { background: #444; color: white; }
         .copy-btn.copied { background: #8ab4f8; color: #131314; border-color: #8ab4f8; }
 
-        /* Animaties */
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Mobiele optimalisatie */
-        @media (max-width: 600px) {
-            .input-area { padding: 10px; padding-bottom: 20px; }
-            .user-msg { max-width: 90%; }
-            .header { padding: 10px 15px; font-size: 1.1em; }
+        /* Mobiel */
+        @media (max-width: 768px) {
+            #sidebar { width: 70px; padding: 8px; }
+            .new-chat-btn { font-size: 1.2rem; border-radius: 50%; padding: 10px; margin-bottom: 10px; }
+            .new-chat-btn span { display: none; }
+            .new-chat-btn::before { content: "+"; }
+            .chat-list-title, .chat-list-item { display: none; }
         }
     </style>
 </head>
 <body>
 
-    <div id="app-container">
+    <div id="sidebar">
+        <div class="new-chat-btn" onclick="startNewChat()"><span>+ Nieuwe chat</span></div>
+        <div class="chat-list-title">Recente chats</div>
+        <div id="chat-list"></div>
+    </div>
+
+    <div id="main-content">
         <div class="header">✨ Orbit AI</div>
+        <div id="chat-box"></div>
         
-        <div id="chat-box">
-            <div class="message bot-msg"><b>Orbit</b><br>Hallo! Ik ben klaar voor actie. Wat gaan we vandaag bouwen?</div>
-        </div>
-        
-        <div class="input-area">
-            <input type="text" id="user-input" placeholder="Vraag Orbit iets..." onkeypress="handleEnter(event)" autocomplete="off">
-            <button class="send-btn" onclick="sendMessage()">Stuur</button>
+        <div class="input-container">
+            <div class="input-area">
+                <input type="text" id="user-input" placeholder="Vraag Orbit iets..." onkeypress="handleEnter(event)" autocomplete="off">
+                <button class="send-btn" onclick="sendMessage()">Stuur</button>
+            </div>
         </div>
     </div>
 
     <script>
-        // Jouw vaste Ngrok URL
         const BACKEND_URL = "https://roaming-travesty-retold.ngrok-free.dev";
+        
+        // Laad alle chats uit de browser óf begin met een lege lijst
+        let allChats = JSON.parse(localStorage.getItem('orbit_chats')) || [];
+        let activeChatId = localStorage.getItem('orbit_active_id') || null;
+
+        // Start direct op bij laden
+        window.onload = function() {
+            if (allChats.length === 0 || !activeChatId) {
+                startNewChat();
+            } else {
+                renderSidebar();
+                loadChat(activeChatId);
+            }
+        };
+
+        function startNewChat() {
+            const newId = 'chat_' + Date.now();
+            const newChat = {
+                id: newId,
+                title: "Nieuw gesprek",
+                history: []
+            };
+            allChats.unshift(newChat); // Zet bovenaan de lijst
+            activeChatId = newId;
+            saveToStorage();
+            renderSidebar();
+            loadChat(newId);
+        }
+
+        function saveToStorage() {
+            localStorage.setItem('orbit_chats', JSON.stringify(allChats));
+            localStorage.setItem('orbit_active_id', activeChatId);
+        }
+
+        function renderSidebar() {
+            const listContainer = document.getElementById('chat-list');
+            listContainer.innerHTML = '';
+            
+            allChats.forEach(chat => {
+                const isActive = chat.id === activeChatId ? 'active' : '';
+                listContainer.innerHTML += `
+                    <div class="chat-list-item ${isActive}" onclick="loadChat('${chat.id}')">
+                        🗑️ ${chat.title}
+                    </div>
+                `;
+            });
+        }
+
+        function loadChat(chatId) {
+            activeChatId = chatId;
+            renderSidebar();
+            saveToStorage();
+            
+            const chatBox = document.getElementById('chat-box');
+            chatBox.innerHTML = '';
+            
+            const currentChat = allChats.find(c => c.id === chatId);
+            if (!currentChat || currentChat.history.length === 0) {
+                chatBox.innerHTML = `<div class="message bot-msg"><b>Orbit</b><br>Hallo! Ik ben klaar voor een nieuw gesprek. Wat gaan we doen?</div>`;
+                return;
+            }
+
+            // Herbouw het hele scherm op basis van de geschiedenis van deze chat
+            currentChat.history.forEach(msg => {
+                if (msg.role === 'user') {
+                    chatBox.innerHTML += `<div class="message user-msg">${msg.text}</div>`;
+                } else {
+                    chatBox.innerHTML += `<div class="message bot-msg"><b>Orbit</b><br>${formatOrbitText(msg.text)}</div>`;
+                }
+            });
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
 
         function handleEnter(event) {
-            if (event.key === "Enter") {
-                sendMessage();
+            if (event.key === "Enter") sendMessage();
+        }
+
+        async function sendMessage() {
+            const inputField = document.getElementById('user-input');
+            const chatBox = document.getElementById('chat-box');
+            const messageText = inputField.value.trim();
+
+            if (!messageText) return;
+
+            // Zoek huidige chat op
+            const currentChat = allChats.find(c => c.id === activeChatId);
+            
+            // Als dit het eerste bericht is, verander de titel van de chat in de zijbalk
+            if (currentChat.history.length === 0) {
+                currentChat.title = messageText.substring(0, 20) + (messageText.length > 20 ? '...' : '');
+                renderSidebar();
+            }
+
+            // Update geschiedenis & UI voor User
+            currentChat.history.push({ role: 'user', text: messageText });
+            chatBox.innerHTML += `<div class="message user-msg">${messageText}</div>`;
+            inputField.value = '';
+            chatBox.scrollTop = chatBox.scrollHeight;
+            saveToStorage();
+
+            try {
+                // Stuur de VOLLEDIGE geschiedenis van deze specifieke chat mee naar Flask
+                const response = await fetch(`${BACKEND_URL}/chat`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'ngrok-skip-browser-warning': 'true'
+                    },
+                    body: JSON.stringify({ history: currentChat.history })
+                });
+
+                const data = await response.json();
+                
+                // Update geschiedenis & UI voor Orbit
+                currentChat.history.push({ role: 'assistant', text: data.reply });
+                chatBox.innerHTML += `<div class="message bot-msg"><b>Orbit</b><br>${formatOrbitText(data.reply)}</div>`;
+                chatBox.scrollTop = chatBox.scrollHeight;
+                saveToStorage();
+
+            } catch (error) {
+                chatBox.innerHTML += `<div class="message bot-msg" style="color:#ff8a8a;"><b>Systeemwaarschuwing</b><br>Kan geen verbinding maken met Orbit.</div>`;
+                chatBox.scrollTop = chatBox.scrollHeight;
             }
         }
 
-        // De nieuwe, slimmere parser
+        // --- CODE PARSER ---
         function formatOrbitText(text) {
             const codeBlocks = [];
             const codeRegex = /```([a-zA-Z]*)\n([\s\S]*?)```/g;
             
-            // Stap 1: Haal de codeblokken er tijdelijk uit zodat normale enters ze niet kapot maken
             let tempText = text.replace(codeRegex, function(match, language, code) {
                 codeBlocks.push({ language, code });
                 return `___CODEBLOCK_${codeBlocks.length - 1}___`;
             });
 
-            // Stap 2: Zet gewone enters om in HTML <br> tags
             tempText = tempText.replace(/\n/g, '<br>');
 
-            // Stap 3: Zet de codeblokken netjes terug met de nieuwe styling
             codeBlocks.forEach((block, index) => {
                 const langLabel = block.language ? block.language.toUpperCase() : 'CODE';
                 const safeCode = block.code.replace(/</g, '&lt;').replace(/>/g, '&gt;').trim();
@@ -222,52 +338,11 @@
             navigator.clipboard.writeText(codeText).then(() => {
                 button.innerText = 'Gekopieerd!';
                 button.classList.add('copied');
-                
                 setTimeout(() => {
                     button.innerText = 'Kopieer';
                     button.classList.remove('copied');
                 }, 2000);
-            }).catch(err => {
-                console.error('Kon niet kopiëren: ', err);
             });
-        }
-
-        async function sendMessage() {
-            const inputField = document.getElementById('user-input');
-            const chatBox = document.getElementById('chat-box');
-            const message = inputField.value.trim();
-
-            if (!message) return;
-
-            // Toon jouw bericht
-            chatBox.innerHTML += `<div class="message user-msg">${message}</div>`;
-            inputField.value = '';
-            chatBox.scrollTop = chatBox.scrollHeight;
-
-            try {
-                const response = await fetch(`${BACKEND_URL}/chat`, {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'ngrok-skip-browser-warning': 'true' // Ngrok Bypass!
-                    },
-                    body: JSON.stringify({ message: message })
-                });
-
-                if (!response.ok) throw new Error("Netwerk respons was niet oké.");
-
-                const data = await response.json();
-                const formattedReply = formatOrbitText(data.reply);
-
-                // Toon Orbit's antwoord
-                chatBox.innerHTML += `<div class="message bot-msg"><b>Orbit</b><br>${formattedReply}</div>`;
-                chatBox.scrollTop = chatBox.scrollHeight;
-                
-            } catch (error) {
-                chatBox.innerHTML += `<div class="message bot-msg" style="color:#ff8a8a;"><b>Systeemwaarschuwing</b><br>Kan geen verbinding maken met Orbit. Draait je Ngrok tunnel nog?</div>`;
-                console.error("Error:", error);
-                chatBox.scrollTop = chatBox.scrollHeight;
-            }
         }
     </script>
 </body>
