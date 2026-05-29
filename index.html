@@ -2,42 +2,56 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <title>Orbit AI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orbit AI Interface</title>
     <style>
-        body { background: #1a1a1a; color: #fff; font-family: sans-serif; display: flex; justify-content: center; padding-top: 50px; }
-        .chat-box { width: 90%; max-width: 600px; background: #2d2d2d; padding: 20px; border-radius: 10px; }
-        #chat { height: 400px; overflow-y: auto; border-bottom: 1px solid #444; margin-bottom: 10px; }
-        input { width: 75%; padding: 10px; border-radius: 5px; border: none; }
-        button { padding: 10px; background: #007bff; border: none; color: white; cursor: pointer; border-radius: 5px; }
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        #chat-container { width: 100%; max-width: 600px; border: 1px solid #ccc; padding: 20px; border-radius: 8px; }
+        #chat-box { height: 300px; overflow-y: scroll; border: 1px solid #eee; margin-bottom: 10px; padding: 10px; }
+        input { width: 80%; padding: 10px; }
+        button { padding: 10px; cursor: pointer; }
     </style>
 </head>
 <body>
-    <div class="chat-box">
-        <div id="chat"></div>
-        <input type="text" id="userInput" placeholder="Vraag Orbit wat...">
-        <button onclick="send()">Verzend</button>
+
+    <div id="chat-container">
+        <h2>Orbit AI</h2>
+        <div id="chat-box"></div>
+        <input type="text" id="user-input" placeholder="Stel een vraag aan Orbit...">
+        <button onclick="sendMessage()">Verzend</button>
     </div>
 
     <script>
-       
-        const BACKEND_URL = "https://option-artists-various-thru.trycloudflare.com";
+        // Hier staat je vaste URL!
+        const BACKEND_URL = "https://roaming-travesty-retold.ngrok-free.dev";
 
-        async function send() {
-            const input = document.getElementById('userInput');
-            const chat = document.getElementById('chat');
-            const message = input.value;
-            
-            chat.innerHTML += `<p><b>Jij:</b> ${message}</p>`;
-            input.value = '';
+        async function sendMessage() {
+            const inputField = document.getElementById('user-input');
+            const chatBox = document.getElementById('chat-box');
+            const message = inputField.value;
 
-            const response = await fetch(`${BACKEND_URL}/chat`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ message: message })
-            });
+            if (!message) return;
 
-            const data = await response.json();
-            chat.innerHTML += `<p><b>Orbit:</b> ${data.reply}</p>`;
+            // Toon eigen bericht
+            chatBox.innerHTML += `<p><b>Jij:</b> ${message}</p>`;
+            inputField.value = '';
+
+            try {
+                const response = await fetch(`${BACKEND_URL}/chat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: message })
+                });
+
+                const data = await response.json();
+                
+                // Toon antwoord van Orbit
+                chatBox.innerHTML += `<p><b>Orbit:</b> ${data.reply}</p>`;
+                chatBox.scrollTop = chatBox.scrollHeight;
+            } catch (error) {
+                chatBox.innerHTML += `<p style="color:red;"><b>Fout:</b> Kan geen verbinding maken met Orbit.</p>`;
+                console.error("Error:", error);
+            }
         }
     </script>
 </body>
