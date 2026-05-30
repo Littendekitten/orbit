@@ -1,371 +1,1067 @@
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Orbit AI 🌌</title>
-    <style>
-        /* --- ALGEMENE STIJL --- */
-        :root {
-            --bg-color: #0b101e;
-            --panel-bg: rgba(26, 32, 53, 0.85);
-            --accent: #3b82f6;
-            --accent-glow: 0 0 15px rgba(59, 130, 246, 0.5);
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Orbit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
 
-        body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            background: radial-gradient(circle at top right, #1e293b, var(--bg-color));
-            color: var(--text-main);
-            height: 100vh;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(10px);
-        }
+  <style>
+    /* ─── TOKENS ─────────────────────────────────────────── */
+    :root {
+      --bg:          #07070f;
+      --panel:       #0c0c1b;
+      --card:        #111122;
+      --hover:       #17172c;
+      --input-bg:    #0e0e1e;
+      --border:      rgba(120, 100, 255, 0.13);
+      --border-hi:   rgba(140, 120, 255, 0.28);
+      --accent:      #7857ff;
+      --accent-lt:   #a48fff;
+      --accent-glow: rgba(120, 87, 255, 0.22);
+      --teal:        #3ed6c0;
+      --teal-dim:    rgba(62, 214, 192, 0.12);
+      --text:        #ebebf5;
+      --text-dim:    #8080a4;
+      --text-muted:  #4e4e68;
+      --danger:      #ff4a6b;
+      --danger-bg:   rgba(255, 74, 107, 0.10);
+      --sidebar-w:   275px;
+      --header-h:    56px;
+      --ease:        cubic-bezier(0.4, 0, 0.2, 1);
+    }
 
-        /* --- CONTAINER --- */
-        .container {
-            width: 95%;
-            max-width: 600px;
-            height: 85vh;
-            background: var(--panel-bg);
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            border: 1px solid rgba(255,255,255,0.1);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            position: relative;
-        }
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; overflow: hidden; }
 
-        /* --- LOGIN SCHERM --- */
-        #login-screen {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: var(--bg-color);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 10;
-            transition: opacity 0.5s ease;
-        }
+    body {
+      font-family: 'Sora', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.6;
+    }
 
-        .login-box {
-            text-align: center;
-            padding: 40px;
-            background: rgba(255,255,255,0.03);
-            border-radius: 16px;
-            border: 1px solid rgba(255,255,255,0.05);
-        }
+    button   { cursor: pointer; border: none; background: none; font: inherit; color: inherit; }
+    textarea { font: inherit; color: inherit; background: none; border: none; outline: none; }
+    input    { font: inherit; color: inherit; }
 
-        .login-box h1 {
-            font-size: 2.5rem;
-            margin-bottom: 5px;
-            color: var(--accent);
-            text-shadow: var(--accent-glow);
-        }
+    /* ─── CANVAS ─────────────────────────────────────────── */
+    #stars { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
 
-        .login-box input {
-            width: 80%;
-            padding: 15px;
-            margin-top: 20px;
-            border-radius: 8px;
-            border: 1px solid rgba(255,255,255,0.2);
-            background: rgba(0,0,0,0.2);
-            color: white;
-            font-size: 1rem;
-            text-align: center;
-            outline: none;
-        }
+    /* ─── SCREENS ────────────────────────────────────────── */
+    .screen {
+      position: fixed; inset: 0; z-index: 1;
+      display: none; opacity: 0;
+      transition: opacity 0.38s var(--ease);
+    }
+    .screen.active  { display: flex; }
+    .screen.visible { opacity: 1; }
 
-        .login-box input:focus {
-            border-color: var(--accent);
-            box-shadow: var(--accent-glow);
-        }
+    /* ─── LOGIN ──────────────────────────────────────────── */
+    #loginScreen { align-items: center; justify-content: center; }
 
-        .login-box button {
-            margin-top: 20px;
-            padding: 12px 30px;
-            border-radius: 8px;
-            border: none;
-            background: var(--accent);
-            color: white;
-            font-size: 1.1rem;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: var(--accent-glow);
-            transition: transform 0.2s;
-        }
+    .login-card {
+      display: flex; flex-direction: column; align-items: center; gap: 30px;
+      padding: 52px 44px;
+      background: linear-gradient(155deg, rgba(18,18,40,0.92) 0%, rgba(9,9,22,0.96) 100%);
+      border: 1px solid var(--border-hi);
+      border-radius: 28px;
+      backdrop-filter: blur(24px);
+      box-shadow: 0 0 0 1px rgba(120,87,255,0.08), 0 24px 80px rgba(0,0,0,0.55), 0 0 60px var(--accent-glow);
+      width: 420px; max-width: calc(100vw - 32px);
+      animation: cardIn 0.55s var(--ease) both;
+    }
+    @keyframes cardIn {
+      from { transform: translateY(28px) scale(0.96); opacity: 0; }
+      to   { transform: none; opacity: 1; }
+    }
 
-        .login-box button:hover {
-            transform: scale(1.05);
-        }
+    .brand { display: flex; flex-direction: column; align-items: center; gap: 14px; }
 
-        /* --- CHAT SCHERM --- */
-        #chat-header {
-            padding: 20px;
-            text-align: center;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            background: rgba(0,0,0,0.2);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+    /* ── Orbit SVG logo ── */
+    .orbit-logo     { width: 80px; height: 80px; filter: drop-shadow(0 0 22px var(--accent-glow)); }
+    .orbit-logo-sm  { width: 30px; height: 30px; }
+    .orbit-planet   { transform-origin: 40px 40px; animation: spin 3.6s linear infinite; }
+    .orbit-planet-sm { transform-origin: 15px 15px; animation: spin 3.2s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
-        #chat-header h2 { margin: 0; font-size: 1.2rem; color: var(--accent); }
-        #logout-btn { background: transparent; color: var(--text-muted); border: none; cursor: pointer; }
-        #logout-btn:hover { color: white; }
+    .brand h1 {
+      font-size: 38px; font-weight: 700; letter-spacing: -0.5px;
+      background: linear-gradient(130deg, #e8e8f8 30%, var(--accent-lt));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .brand p { color: var(--text-dim); font-size: 13.5px; text-align: center; max-width: 240px; font-weight: 300; }
 
-        #chat-window {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
+    .google-btn {
+      display: flex; align-items: center; justify-content: center; gap: 11px;
+      width: 100%; padding: 13px 24px;
+      background: white; color: #1a1a2e;
+      border-radius: 100px; font-size: 14.5px; font-weight: 600;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+      transition: transform 0.15s var(--ease), box-shadow 0.15s var(--ease);
+    }
+    .google-btn:hover  { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.45); }
+    .google-btn:active { transform: none; }
 
-        .message {
-            padding: 12px 18px;
-            border-radius: 12px;
-            max-width: 75%;
-            line-height: 1.4;
-            animation: popIn 0.3s ease;
-            word-wrap: break-word;
-        }
+    .login-note { font-size: 11.5px; color: var(--text-muted); text-align: center; }
 
-        @keyframes popIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+    /* ─── APP LAYOUT ─────────────────────────────────────── */
+    #appScreen { flex-direction: row; }
 
-        .user-msg {
-            background: var(--accent);
-            align-self: flex-end;
-            border-bottom-right-radius: 2px;
-        }
+    /* ─── SIDEBAR ────────────────────────────────────────── */
+    #sidebar {
+      width: var(--sidebar-w); flex-shrink: 0; height: 100%;
+      background: var(--panel); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; z-index: 2;
+    }
 
-        .orbit-msg {
-            background: rgba(255,255,255,0.1);
-            align-self: flex-start;
-            border-bottom-left-radius: 2px;
-        }
+    .sb-header {
+      padding: 17px 16px; display: flex; align-items: center; gap: 9px;
+      border-bottom: 1px solid var(--border);
+    }
+    .sb-header span {
+      font-size: 17px; font-weight: 700; letter-spacing: -0.25px;
+      background: linear-gradient(130deg, #e8e8f8 30%, var(--accent-lt));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
 
-        /* --- INPUT GEBIED --- */
-        #input-area {
-            padding: 15px;
-            display: flex;
-            gap: 10px;
-            background: rgba(0,0,0,0.3);
-            border-top: 1px solid rgba(255,255,255,0.05);
-        }
+    .sb-actions { padding: 10px; }
 
-        #input-area input {
-            flex: 1;
-            padding: 15px;
-            border-radius: 10px;
-            border: 1px solid rgba(255,255,255,0.1);
-            background: rgba(0,0,0,0.2);
-            color: white;
-            font-size: 1rem;
-            outline: none;
-        }
+    #newChatBtn {
+      display: flex; align-items: center; gap: 8px;
+      width: 100%; padding: 9px 13px;
+      background: var(--accent-glow); border: 1px solid rgba(130,110,255,0.22);
+      border-radius: 10px; font-size: 13px; font-weight: 500; color: var(--accent-lt);
+      transition: all 0.15s var(--ease);
+    }
+    #newChatBtn:hover { background: rgba(120,87,255,0.22); border-color: rgba(150,130,255,0.38); color: var(--text); }
 
-        #input-area input:focus { border-color: var(--accent); }
+    #sessionsList {
+      flex: 1; overflow-y: auto; padding: 4px 8px;
+      scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+    }
+    #sessionsList::-webkit-scrollbar { width: 3px; }
+    #sessionsList::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
-        #send-btn {
-            padding: 0 25px;
-            border-radius: 10px;
-            border: none;
-            background: var(--accent);
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.2s;
-        }
+    .sb-label {
+      font-size: 10.5px; font-weight: 600; color: var(--text-muted);
+      letter-spacing: 0.09em; text-transform: uppercase; padding: 8px 8px 4px;
+    }
+    .sb-empty { padding: 12px 10px; font-size: 12px; color: var(--text-muted); text-align: center; }
 
-        #send-btn:hover { background: #2563eb; }
+    .session-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 9px; border-radius: 8px; cursor: pointer;
+      transition: background 0.12s var(--ease);
+    }
+    .session-item:hover       { background: var(--hover); }
+    .session-item.active      { background: var(--hover); }
+    .session-item .s-icon     { color: var(--text-muted); flex-shrink: 0; transition: color 0.12s; }
+    .session-item:hover .s-icon,
+    .session-item.active .s-icon { color: var(--accent-lt); }
 
-        /* --- LAAD ANIMATIE --- */
-        .typing-indicator {
-            display: none;
-            align-self: flex-start;
-            background: rgba(255,255,255,0.05);
-            padding: 12px 18px;
-            border-radius: 12px;
-            border-bottom-left-radius: 2px;
-        }
+    .s-name {
+      flex: 1; font-size: 13px; color: var(--text-dim);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      transition: color 0.12s;
+    }
+    .session-item.active .s-name,
+    .session-item:hover .s-name { color: var(--text); }
 
-        .dot {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--accent);
-            margin: 0 3px;
-            animation: bounce 1.4s infinite ease-in-out both;
-        }
+    .s-actions { display: none; align-items: center; gap: 1px; flex-shrink: 0; }
+    .session-item:hover .s-actions,
+    .session-item.active .s-actions { display: flex; }
 
-        .dot:nth-child(1) { animation-delay: -0.32s; }
-        .dot:nth-child(2) { animation-delay: -0.16s; }
+    .s-btn {
+      display: flex; align-items: center; justify-content: center;
+      width: 25px; height: 25px; border-radius: 6px; color: var(--text-muted);
+      transition: all 0.12s;
+    }
+    .s-btn:hover        { background: rgba(255,255,255,0.07); color: var(--text); }
+    .s-btn.del:hover    { background: var(--danger-bg); color: var(--danger); }
 
-        @keyframes bounce {
-            0%, 80%, 100% { transform: scale(0); }
-            40% { transform: scale(1); }
-        }
-    </style>
+    /* sidebar footer */
+    .sb-footer { padding: 10px; border-top: 1px solid var(--border); }
+
+    .user-row {
+      display: flex; align-items: center; gap: 9px; padding: 9px 10px;
+      background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    }
+    #userAvatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; flex-shrink: 0; border: 1.5px solid var(--border-hi); }
+    .user-info  { flex: 1; overflow: hidden; }
+    .u-name     { font-size: 12.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+    .u-email    { font-size: 10.5px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+
+    #signOutBtn {
+      display: flex; align-items: center; justify-content: center;
+      width: 28px; height: 28px; border-radius: 7px; color: var(--text-muted);
+      transition: all 0.12s; flex-shrink: 0;
+    }
+    #signOutBtn:hover { background: var(--danger-bg); color: var(--danger); }
+
+    /* ─── MAIN AREA ──────────────────────────────────────── */
+    #mainArea {
+      flex: 1; display: flex; flex-direction: column;
+      height: 100%; min-width: 0; overflow: hidden;
+    }
+
+    #chatHeader {
+      height: var(--header-h); padding: 0 22px;
+      display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+      border-bottom: 1px solid var(--border);
+      background: rgba(8,8,18,0.6); backdrop-filter: blur(14px);
+    }
+    #currentChatName { font-size: 14.5px; font-weight: 600; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    #editTitleBtn {
+      display: flex; align-items: center; justify-content: center;
+      width: 30px; height: 30px; border-radius: 7px; color: var(--text-muted);
+      transition: all 0.12s; flex-shrink: 0;
+    }
+    #editTitleBtn:hover { background: var(--hover); color: var(--text); }
+
+    /* messages scroll area */
+    #messagesArea {
+      flex: 1; overflow-y: auto; position: relative; min-height: 0;
+      scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+    }
+    #messagesArea::-webkit-scrollbar { width: 4px; }
+    #messagesArea::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* empty state overlay */
+    #emptyState {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 14px; color: var(--text-muted); text-align: center; padding: 40px;
+      pointer-events: none;
+    }
+    #emptyState p { font-size: 13.5px; max-width: 220px; }
+    .hidden { display: none !important; }
+
+    /* messages list */
+    #msgList {
+      padding: 24px 0 12px; min-height: 100%;
+      display: flex; flex-direction: column; gap: 22px;
+    }
+    #msgInner {
+      max-width: 740px; margin: 0 auto; padding: 0 22px;
+      display: flex; flex-direction: column; gap: 22px; width: 100%;
+    }
+
+    /* individual message */
+    .msg { display: flex; flex-direction: column; gap: 5px; animation: msgIn 0.22s var(--ease) both; }
+    @keyframes msgIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+    .msg.user      { align-items: flex-end; }
+    .msg.assistant { align-items: flex-start; }
+
+    .msg-label {
+      font-size: 10.5px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+      display: flex; align-items: center; gap: 5px;
+    }
+    .msg.user      .msg-label { color: var(--accent-lt); }
+    .msg.assistant .msg-label { color: var(--teal); }
+
+    .msg-bubble {
+      max-width: 82%; padding: 11px 15px; border-radius: 14px;
+      font-size: 14px; line-height: 1.68;
+      word-break: break-word;
+    }
+    .msg.user .msg-bubble {
+      background: var(--accent); color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+    .msg.assistant .msg-bubble {
+      background: var(--card); border: 1px solid var(--border); color: var(--text);
+      border-bottom-left-radius: 4px;
+      font-family: 'JetBrains Mono', monospace; font-size: 13px;
+    }
+    .msg-bubble code { background: rgba(0,0,0,0.32); padding: 2px 5px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+    .msg-bubble pre  { background: rgba(0,0,0,0.42); padding: 12px; border-radius: 8px; overflow-x: auto; margin: 8px 0; }
+    .msg-bubble pre code { background: none; padding: 0; }
+    .msg-bubble strong { color: var(--accent-lt); font-weight: 600; }
+
+    /* typing dots */
+    .typing { display: flex; align-items: center; gap: 5px; padding: 12px 4px; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent-lt); animation: bounce 1.2s ease-in-out infinite; }
+    .dot:nth-child(2) { animation-delay: 0.16s; }
+    .dot:nth-child(3) { animation-delay: 0.32s; }
+    @keyframes bounce { 0%,80%,100% { transform: translateY(0); opacity: 0.38; } 40% { transform: translateY(-7px); opacity: 1; } }
+
+    /* ─── INPUT BAR ──────────────────────────────────────── */
+    #inputArea { padding: 14px 22px 18px; flex-shrink: 0; }
+    .input-wrap {
+      max-width: 740px; margin: 0 auto;
+      display: flex; align-items: flex-end; gap: 10px;
+      background: var(--input-bg); border: 1px solid var(--border);
+      border-radius: 14px; padding: 11px 13px;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .input-wrap:focus-within { border-color: var(--border-hi); box-shadow: 0 0 0 3px var(--accent-glow); }
+    #msgInput {
+      flex: 1; resize: none; min-height: 22px; max-height: 160px;
+      overflow-y: auto; font-size: 14px; line-height: 1.55; background: transparent;
+      scrollbar-width: thin;
+    }
+    #msgInput::placeholder { color: var(--text-muted); }
+    #sendBtn {
+      display: flex; align-items: center; justify-content: center;
+      width: 35px; height: 35px; flex-shrink: 0; border-radius: 9px;
+      background: var(--accent); color: #fff;
+      box-shadow: 0 2px 14px var(--accent-glow);
+      transition: all 0.15s var(--ease);
+    }
+    #sendBtn:hover:not(:disabled) { background: var(--accent-lt); transform: scale(1.06); }
+    #sendBtn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+
+    /* ─── MODALS ─────────────────────────────────────────── */
+    .overlay {
+      position: fixed; inset: 0; z-index: 100;
+      background: rgba(0,0,0,0.62); backdrop-filter: blur(5px);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.2s var(--ease);
+    }
+    .overlay.open { opacity: 1; pointer-events: all; }
+
+    .modal {
+      background: var(--panel); border: 1px solid var(--border-hi);
+      border-radius: 20px; padding: 26px 30px; width: 370px;
+      max-width: calc(100vw - 32px); box-shadow: 0 24px 64px rgba(0,0,0,0.55);
+      transform: scale(0.94) translateY(12px); transition: transform 0.24s var(--ease);
+    }
+    .overlay.open .modal { transform: none; }
+    .modal h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+    .modal p  { color: var(--text-dim); font-size: 13px; margin-bottom: 22px; }
+    .modal-input {
+      width: 100%; padding: 10px 13px; margin-bottom: 18px;
+      background: var(--input-bg); border: 1px solid var(--border); border-radius: 9px;
+      font-size: 14px; color: var(--text); outline: none;
+      transition: border-color 0.15s;
+    }
+    .modal-input:focus { border-color: var(--accent); }
+    .modal-actions { display: flex; gap: 9px; justify-content: flex-end; }
+
+    .btn-ghost   { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; color: var(--text-dim); transition: all 0.12s; }
+    .btn-ghost:hover { background: var(--hover); color: var(--text); }
+    .btn-primary { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; background: var(--accent); color: #fff; transition: background 0.12s; }
+    .btn-primary:hover { background: var(--accent-lt); }
+    .btn-danger  { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; background: var(--danger-bg); color: var(--danger); border: 1px solid rgba(255,74,107,0.22); transition: all 0.12s; }
+    .btn-danger:hover { background: var(--danger); color: #fff; border-color: transparent; }
+
+    /* ─── TOAST ──────────────────────────────────────────── */
+    #toast {
+      position: fixed; bottom: 22px; right: 22px; z-index: 200;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 10px; padding: 11px 17px; font-size: 13px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+      transform: translateY(18px); opacity: 0;
+      transition: all 0.25s var(--ease); pointer-events: none; max-width: 340px;
+    }
+    #toast.show { transform: none; opacity: 1; }
+    #toast.err  { border-color: var(--danger); color: var(--danger); }
+
+    /* ─── RESPONSIVE ─────────────────────────────────────── */
+    @media (max-width: 580px) {
+      :root { --sidebar-w: 230px; }
+      .login-card { padding: 40px 28px; }
+    }
+  </style>
 </head>
 <body>
 
-    <div class="container">
-        
-        <div id="login-screen">
-            <div class="login-box">
-                <h1>Orbit AI 🌌</h1>
-                <p style="color: #94a3b8;">Systeem Online. Identificeer jezelf.</p>
-                <input type="text" id="usernameInput" placeholder="Jouw roepnaam..." onkeypress="handleLoginPress(event)">
-                <button onclick="login()">Inloggen</button>
-            </div>
-        </div>
+<!-- Twinkling star field -->
+<canvas id="stars"></canvas>
 
-        <div id="chat-header">
-            <span style="font-size: 0.8rem; color: #94a3b8;">🟢 Cloud Verbonden</span>
-            <h2>Orbit AI</h2>
-            <button id="logout-btn" onclick="logout()">Uitloggen</button>
-        </div>
+<!-- ═══════════════════════════════════════════════════════════
+     LOGIN SCREEN
+═══════════════════════════════════════════════════════════ -->
+<div id="loginScreen" class="screen">
+  <div class="login-card">
 
-        <div id="chat-window">
-            <div class="message orbit-msg">Welkom in de cockpit! Ik ben Orbit. Wat gaan we vandaag doen?</div>
-            <div class="typing-indicator" id="typingIndicator">
-                <span class="dot"></span><span class="dot"></span><span class="dot"></span>
-            </div>
-        </div>
-
-        <div id="input-area">
-            <input type="text" id="userInput" placeholder="Verzend een commando..." onkeypress="handleKeyPress(event)" disabled>
-            <button id="send-btn" onclick="sendMessage()" disabled>🚀</button>
-        </div>
-
+    <div class="brand">
+      <svg class="orbit-logo" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#b09aff"/>
+            <stop offset="100%" stop-color="#7857ff"/>
+          </linearGradient>
+          <linearGradient id="g2" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#7857ff"/>
+            <stop offset="100%" stop-color="#3ed6c0"/>
+          </linearGradient>
+        </defs>
+        <!-- orbit ring -->
+        <circle cx="40" cy="40" r="28" stroke="url(#g2)" stroke-width="1.5" fill="none" opacity="0.55"/>
+        <!-- core -->
+        <circle cx="40" cy="40" r="10" fill="url(#g1)"/>
+        <!-- moon (rotates) -->
+        <g class="orbit-planet">
+          <circle cx="68" cy="40" r="5" fill="#a48fff" opacity="0.92"/>
+        </g>
+      </svg>
+      <h1>Orbit</h1>
+      <p>Your personal AI, ready when you are</p>
     </div>
 
-    <script>
-        // JOUW LIVE RENDER SERVER!
-        const RENDER_URL = "https://orbit-wmuq.onrender.com";
-        let currentUser = "";
+    <button class="google-btn" id="googleBtn">
+      <!-- Google G logo -->
+      <svg width="19" height="19" viewBox="0 0 24 24" aria-hidden="true">
+        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+      </svg>
+      Continue with Google
+    </button>
 
-        const loginScreen = document.getElementById('login-screen');
-        const chatWindow = document.getElementById('chat-window');
-        const usernameInput = document.getElementById('usernameInput');
-        const userInput = document.getElementById('userInput');
-        const sendBtn = document.getElementById('send-btn');
-        const typingIndicator = document.getElementById('typingIndicator');
+    <p class="login-note">Your chats are saved securely and linked to your Google account.</p>
+  </div>
+</div>
 
-        // --- INLOGGEN ---
-        // Controleer of de gebruiker al was ingelogd
-        if (localStorage.getItem('orbit_username')) {
-            currentUser = localStorage.getItem('orbit_username');
-            showChat();
+<!-- ═══════════════════════════════════════════════════════════
+     MAIN APP
+═══════════════════════════════════════════════════════════ -->
+<div id="appScreen" class="screen">
+
+  <!-- SIDEBAR -->
+  <aside id="sidebar">
+    <div class="sb-header">
+      <svg class="orbit-logo-sm" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="g3" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#b09aff"/><stop offset="100%" stop-color="#7857ff"/>
+          </linearGradient>
+        </defs>
+        <circle cx="15" cy="15" r="10.5" stroke="#7857ff" stroke-width="1" fill="none" opacity="0.5"/>
+        <circle cx="15" cy="15" r="4.5" fill="url(#g3)"/>
+        <g class="orbit-planet-sm">
+          <circle cx="25.5" cy="15" r="2" fill="#a48fff" opacity="0.9"/>
+        </g>
+      </svg>
+      <span>Orbit</span>
+    </div>
+
+    <div class="sb-actions">
+      <button id="newChatBtn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
+        New Chat
+      </button>
+    </div>
+
+    <div id="sessionsList">
+      <div class="sb-label">Chats</div>
+    </div>
+
+    <div class="sb-footer">
+      <div class="user-row">
+        <img id="userAvatar" src="" alt="avatar">
+        <div class="user-info">
+          <span class="u-name" id="userName"></span>
+          <span class="u-email" id="userEmail"></span>
+        </div>
+        <button id="signOutBtn" title="Sign out" aria-label="Sign out">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN CHAT -->
+  <main id="mainArea">
+
+    <div id="chatHeader">
+      <span id="currentChatName">Select a chat</span>
+      <button id="editTitleBtn" title="Rename" aria-label="Rename this chat">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+          <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </svg>
+      </button>
+    </div>
+
+    <div id="messagesArea">
+      <!-- Empty state (centered overlay) -->
+      <div id="emptyState">
+        <svg width="52" height="52" viewBox="0 0 80 80" fill="none">
+          <circle cx="40" cy="40" r="28" stroke="#7857ff" stroke-width="1.5" fill="none" opacity="0.35"/>
+          <circle cx="40" cy="40" r="10" fill="#7857ff" opacity="0.25"/>
+        </svg>
+        <p>Ask Orbit anything to get started</p>
+      </div>
+
+      <!-- Message list -->
+      <div id="msgList">
+        <div id="msgInner"></div>
+      </div>
+    </div>
+
+    <div id="inputArea">
+      <div class="input-wrap">
+        <textarea id="msgInput" placeholder="Message Orbit…" rows="1" aria-label="Message input"></textarea>
+        <button id="sendBtn" disabled aria-label="Send">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     RENAME MODAL
+═══════════════════════════════════════════════════════════ -->
+<div class="overlay" id="renameOverlay">
+  <div class="modal" role="dialog" aria-labelledby="renameTitle">
+    <h3 id="renameTitle">Rename Chat</h3>
+    <p>Give this conversation a new name.</p>
+    <input class="modal-input" id="renameInput" type="text" placeholder="Chat name…" maxlength="60">
+    <div class="modal-actions">
+      <button class="btn-ghost" id="renameCancelBtn">Cancel</button>
+      <button class="btn-primary" id="renameSaveBtn">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     DELETE MODAL
+═══════════════════════════════════════════════════════════ -->
+<div class="overlay" id="deleteOverlay">
+  <div class="modal" role="dialog" aria-labelledby="deleteTitle">
+    <h3 id="deleteTitle">Delete Chat</h3>
+    <p>This will permanently delete this conversation and all its messages. This can't be undone.</p>
+    <div class="modal-actions">
+      <button class="btn-ghost" id="deleteCancelBtn">Cancel</button>
+      <button class="btn-danger" id="deleteConfirmBtn">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast notification -->
+<div id="toast" role="status" aria-live="polite"></div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCRIPT
+═══════════════════════════════════════════════════════════ -->
+<script>
+/*
+ * ╔══════════════════════════════════════════════════════════╗
+ * ║              ORBIT  —  SETUP CHECKLIST                  ║
+ * ╠══════════════════════════════════════════════════════════╣
+ * ║                                                          ║
+ * ║  1. Firebase Web Config                                  ║
+ * ║     Firebase Console → orbit-ai-server → Project Settings║
+ * ║     → General → Your apps → Add Web App                 ║
+ * ║     Paste the firebaseConfig values below.               ║
+ * ║                                                          ║
+ * ║  2. Enable Google Sign-In in Firebase                    ║
+ * ║     Authentication → Sign-in method → Google → Enable   ║
+ * ║                                                          ║
+ * ║  3. Add authorized domain to Firebase Auth               ║
+ * ║     Authentication → Settings → Authorized domains:     ║
+ * ║     orbit-wmuq.onrender.com                              ║
+ * ║                                                          ║
+ * ║  4. Add authorized JS origin to Google Cloud             ║
+ * ║     Cloud Console → APIs → Credentials → OAuth Client   ║
+ * ║     → Authorized JavaScript origins:                     ║
+ * ║     https://orbit-wmuq.onrender.com                      ║
+ * ║                                                          ║
+ * ║  5. Firestore Security Rules                             ║
+ * ║     Firestore → Rules → paste:                           ║
+ * ║                                                          ║
+ * ║     rules_version = '2';                                 ║
+ * ║     service cloud.firestore {                            ║
+ * ║       match /databases/{database}/documents {            ║
+ * ║         match /users/{uid}/{doc=**} {                    ║
+ * ║           allow read, write:                             ║
+ * ║             if request.auth != null                      ║
+ * ║             && request.auth.uid == uid;                  ║
+ * ║         }                                                ║
+ * ║       }                                                  ║
+ * ║     }                                                    ║
+ * ║                                                          ║
+ * ║  ⚠️  Backend OOM note:                                   ║
+ * ║     Your Render free tier (512 MB) crashes because       ║
+ * ║     PyTorch + model weights are too large.               ║
+ * ║     Fix: upgrade to Render Starter ($7/mo, 512 MB→2 GB) ║
+ * ║     OR replace the local model with the Anthropic API.   ║
+ * ║                                                          ║
+ * ╚══════════════════════════════════════════════════════════╝
+ */
+
+// ── 1. CONFIGURE THESE ────────────────────────────────────────
+const firebaseConfig = {
+  apiKey:            "YOUR_WEB_API_KEY",            // ← Firebase Console → Project Settings → General
+  authDomain:        "orbit-ai-server.firebaseapp.com",
+  projectId:         "orbit-ai-server",
+  storageBucket:     "orbit-ai-server.firebasestorage.app",
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",    // ← Firebase Console → Project Settings → General
+  appId:             "YOUR_APP_ID"                  // ← Firebase Console → Project Settings → General
+};
+
+const BACKEND = "https://orbit-wmuq.onrender.com";
+// ─────────────────────────────────────────────────────────────
+
+// ── FIREBASE INIT ─────────────────────────────────────────────
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db   = firebase.firestore();
+
+// ── STATE ─────────────────────────────────────────────────────
+let user          = null;
+let activeSid     = null;      // current session ID
+let sessions      = [];        // [{id, name, updatedAt}]
+let unsubSessions = null;
+let unsubMessages = null;
+let isBusy        = false;
+let renameTarget  = null;
+let deleteTarget  = null;
+
+// ── STARS ─────────────────────────────────────────────────────
+;(function stars() {
+  const cv  = document.getElementById('stars');
+  const ctx = cv.getContext('2d');
+  let S = [];
+
+  function resize() { cv.width = innerWidth; cv.height = innerHeight; }
+  function make(n) {
+    S = Array.from({ length: n }, () => ({
+      x: Math.random() * cv.width,
+      y: Math.random() * cv.height,
+      r: Math.random() * 1.1 + 0.2,
+      a: Math.random() * 0.65 + 0.08,
+      sp: Math.random() * 0.007 + 0.002,
+      ph: Math.random() * Math.PI * 2,
+    }));
+  }
+  function draw(t) {
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    for (const s of S) {
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(190,185,255,${s.a * (0.45 + 0.55 * Math.sin(t * s.sp + s.ph))})`;
+      ctx.fill();
+    }
+    requestAnimationFrame(draw);
+  }
+  resize(); make(160); requestAnimationFrame(draw);
+  window.addEventListener('resize', () => { resize(); make(160); });
+})();
+
+// ── AUTH STATE ────────────────────────────────────────────────
+auth.onAuthStateChanged(u => {
+  if (u) { user = u; enterApp(); }
+  else    { user = null; enterLogin(); }
+});
+
+// ── SIGN IN ───────────────────────────────────────────────────
+document.getElementById('googleBtn').onclick = async () => {
+  try {
+    await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+  } catch (e) {
+    toast('Sign-in failed: ' + e.message, true);
+  }
+};
+
+// ── SIGN OUT ──────────────────────────────────────────────────
+document.getElementById('signOutBtn').onclick = async () => {
+  cleanup();
+  await auth.signOut();
+};
+
+// ── SCREEN HELPERS ────────────────────────────────────────────
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active', 'visible'));
+  const el = document.getElementById(id);
+  el.classList.add('active');
+  requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('visible')));
+}
+
+function enterLogin() {
+  cleanup();
+  document.getElementById('msgInner').innerHTML = '';
+  document.getElementById('sessionsList').innerHTML = '<div class="sb-label">Chats</div>';
+  show('loginScreen');
+}
+
+function enterApp() {
+  document.getElementById('userName').textContent  = user.displayName || 'User';
+  document.getElementById('userEmail').textContent = user.email || '';
+  document.getElementById('userAvatar').src =
+    user.photoURL ||
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || 'U')}&background=7857ff&color=fff`;
+  show('appScreen');
+  watchSessions();
+}
+
+function cleanup() {
+  if (unsubSessions) { unsubSessions(); unsubSessions = null; }
+  if (unsubMessages) { unsubMessages(); unsubMessages = null; }
+  activeSid = null; sessions = [];
+}
+
+// ── SESSIONS WATCHER ──────────────────────────────────────────
+function watchSessions() {
+  if (unsubSessions) unsubSessions();
+
+  unsubSessions = db
+    .collection(`users/${user.uid}/sessions`)
+    .orderBy('updatedAt', 'desc')
+    .onSnapshot(snap => {
+      sessions = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderSidebar();
+
+      // if active session was deleted externally, reset
+      if (activeSid && !sessions.find(s => s.id === activeSid)) {
+        resetChat();
+        if (sessions.length) pickSession(sessions[0].id);
+      }
+    }, err => toast('Session sync error: ' + err.message, true));
+}
+
+function renderSidebar() {
+  const list = document.getElementById('sessionsList');
+  list.innerHTML = '<div class="sb-label">Chats</div>';
+
+  if (!sessions.length) {
+    const em = document.createElement('div');
+    em.className = 'sb-empty';
+    em.textContent = 'No chats yet.';
+    list.appendChild(em);
+    return;
+  }
+
+  for (const s of sessions) {
+    const el = document.createElement('div');
+    el.className = 'session-item' + (s.id === activeSid ? ' active' : '');
+    el.dataset.id = s.id;
+
+    el.innerHTML = `
+      <svg class="s-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+      </svg>
+      <span class="s-name" title="${esc(s.name || 'Untitled')}">${esc(s.name || 'Untitled')}</span>
+      <div class="s-actions">
+        <button class="s-btn ren" title="Rename" aria-label="Rename chat">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+        </button>
+        <button class="s-btn del" title="Delete" aria-label="Delete chat">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
+          </svg>
+        </button>
+      </div>`;
+
+    el.addEventListener('click', e => {
+      if (!e.target.closest('.s-actions')) pickSession(s.id);
+    });
+    el.querySelector('.ren').addEventListener('click', e => {
+      e.stopPropagation(); openRename(s.id, s.name || 'Untitled');
+    });
+    el.querySelector('.del').addEventListener('click', e => {
+      e.stopPropagation(); openDelete(s.id);
+    });
+
+    list.appendChild(el);
+  }
+}
+
+// ── PICK SESSION ──────────────────────────────────────────────
+function pickSession(sid) {
+  if (activeSid === sid) return;
+  if (unsubMessages) { unsubMessages(); unsubMessages = null; }
+  activeSid = sid;
+
+  document.querySelectorAll('.session-item').forEach(el =>
+    el.classList.toggle('active', el.dataset.id === sid)
+  );
+
+  const s = sessions.find(x => x.id === sid);
+  document.getElementById('currentChatName').textContent = s?.name || 'Untitled';
+  document.getElementById('msgInner').innerHTML = '';
+  document.getElementById('emptyState').classList.remove('hidden');
+
+  watchMessages(sid);
+}
+
+function resetChat() {
+  if (unsubMessages) { unsubMessages(); unsubMessages = null; }
+  activeSid = null;
+  document.getElementById('currentChatName').textContent = 'Select a chat';
+  document.getElementById('msgInner').innerHTML = '';
+  document.getElementById('emptyState').classList.remove('hidden');
+}
+
+// ── MESSAGES WATCHER ──────────────────────────────────────────
+function watchMessages(sid) {
+  unsubMessages = db
+    .collection(`users/${user.uid}/sessions/${sid}/messages`)
+    .orderBy('timestamp', 'asc')
+    .onSnapshot(snap => {
+      if (sid !== activeSid) return;
+      const inner = document.getElementById('msgInner');
+
+      if (!snap.docs.length) {
+        inner.innerHTML = '';
+        document.getElementById('emptyState').classList.remove('hidden');
+        return;
+      }
+
+      document.getElementById('emptyState').classList.add('hidden');
+
+      // Diff-add only new messages (avoid full re-render)
+      const existing = new Set([...inner.children].map(e => e.dataset.id));
+      snap.docs.forEach(doc => {
+        if (!existing.has(doc.id)) {
+          inner.appendChild(buildMsg(doc.id, doc.data()));
         }
+      });
 
-        function handleLoginPress(event) {
-            if (event.key === 'Enter') login();
-        }
+      scrollBottom();
+    }, err => toast('Message sync error: ' + err.message, true));
+}
 
-        function login() {
-            const name = usernameInput.value.trim();
-            if (name !== "") {
-                currentUser = name;
-                localStorage.setItem('orbit_username', currentUser);
-                showChat();
-            }
-        }
+// ── BUILD MESSAGE BUBBLE ──────────────────────────────────────
+function buildMsg(id, data) {
+  const div = document.createElement('div');
+  div.className = `msg ${data.role}`;
+  div.dataset.id = id;
 
-        function logout() {
-            localStorage.removeItem('orbit_username');
-            currentUser = "";
-            userInput.disabled = true;
-            sendBtn.disabled = true;
-            loginScreen.style.opacity = '1';
-            loginScreen.style.pointerEvents = 'all';
-            
-            // Maak chat leeg (optioneel)
-            const messages = document.querySelectorAll('.message:not(:first-child)');
-            messages.forEach(msg => msg.remove());
-        }
+  const label = data.role === 'user' ? 'You' : 'Orbit';
+  const icon  = data.role === 'assistant'
+    ? `<svg width="11" height="11" viewBox="0 0 80 80" fill="none"><circle cx="40" cy="40" r="28" stroke="currentColor" stroke-width="3" fill="none" opacity="0.5"/><circle cx="40" cy="40" r="10" fill="currentColor"/></svg>`
+    : '';
 
-        function showChat() {
-            loginScreen.style.opacity = '0';
-            loginScreen.style.pointerEvents = 'none';
-            userInput.disabled = false;
-            sendBtn.disabled = false;
-            userInput.focus();
-        }
+  div.innerHTML = `
+    <div class="msg-label">${icon}${label}</div>
+    <div class="msg-bubble">${md(data.content || '')}</div>`;
+  return div;
+}
 
-        // --- CHAT LOGICA ---
-        function appendMessage(text, sender) {
-            const msgDiv = document.createElement('div');
-            msgDiv.classList.add('message');
-            msgDiv.classList.add(sender === 'user' ? 'user-msg' : 'orbit-msg');
-            msgDiv.innerText = text;
-            
-            // Voeg toe vóór de typing indicator
-            chatWindow.insertBefore(msgDiv, typingIndicator);
-            chatWindow.scrollTop = chatWindow.scrollHeight;
-        }
+// ── BASIC MARKDOWN RENDERER ───────────────────────────────────
+function md(raw) {
+  return raw
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
+    .replace(/`([^`\n]+)`/g, '<code>$1</code>')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*([^*\n]+)\*/g, '<em>$1</em>')
+    .replace(/\n/g, '<br>');
+}
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function scrollBottom() {
+  const el = document.getElementById('messagesArea');
+  el.scrollTop = el.scrollHeight;
+}
 
-        function handleKeyPress(event) {
-            if (event.key === 'Enter') sendMessage();
-        }
+// ── NEW CHAT ──────────────────────────────────────────────────
+document.getElementById('newChatBtn').onclick = createChat;
 
-        async function sendMessage() {
-            const message = userInput.value.trim();
-            if (message === "") return;
+async function createChat() {
+  if (!user) return;
+  try {
+    const ref = await db.collection(`users/${user.uid}/sessions`).add({
+      name: 'New Chat',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+    pickSession(ref.id);
+  } catch (e) { toast('Could not create chat: ' + e.message, true); }
+}
 
-            // 1. Toon user bericht
-            appendMessage(message, 'user');
-            userInput.value = "";
-            
-            // Zet input even uit tijdens het wachten
-            userInput.disabled = true;
-            sendBtn.disabled = true;
-            
-            // 2. Toon type animatie (Orbit denkt na)
-            typingIndicator.style.display = 'flex';
-            chatWindow.scrollTop = chatWindow.scrollHeight;
+// ── SEND MESSAGE ──────────────────────────────────────────────
+document.getElementById('sendBtn').onclick = send;
+document.getElementById('msgInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+});
+document.getElementById('msgInput').addEventListener('input', function () {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 160) + 'px';
+  document.getElementById('sendBtn').disabled = !this.value.trim() || isBusy;
+});
 
-            try {
-                // 3. Stuur naar Render!
-                const response = await fetch(`${RENDER_URL}/chat`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        user_id: currentUser, // Gebruikt nu je inlognaam!
-                        message: message
-                    })
-                });
+async function send() {
+  const inp  = document.getElementById('msgInput');
+  const text = inp.value.trim();
+  if (!text || isBusy) return;
 
-                const data = await response.json();
-                
-                // Verberg animatie en toon antwoord
-                typingIndicator.style.display = 'none';
-                appendMessage(data.reply, 'orbit');
+  // Auto-create a session if none selected
+  if (!activeSid) await createChat();
+  if (!activeSid) return;
 
-            } catch (error) {
-                console.error("Netwerk fout:", error);
-                typingIndicator.style.display = 'none';
-                appendMessage("Mijn connectie met de cloud is even verbroken! (Wakker worden duurt max 50 sec)", 'orbit');
-            }
+  inp.value = ''; inp.style.height = 'auto';
+  document.getElementById('sendBtn').disabled = true;
+  isBusy = true;
 
-            // Zet input weer aan
-            userInput.disabled = false;
-            sendBtn.disabled = false;
-            userInput.focus();
-        }
-    </script>
+  const uid = user.uid;
+  const sid = activeSid;
+
+  try {
+    // Save user turn
+    await db.collection(`users/${uid}/sessions/${sid}/messages`).add({
+      role: 'user', content: text,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+
+    // Auto-name session from first real message
+    const s = sessions.find(x => x.id === sid);
+    const nameUpdate = (s?.name === 'New Chat')
+      ? { name: text.slice(0, 45) + (text.length > 45 ? '…' : ''), updatedAt: firebase.firestore.FieldValue.serverTimestamp() }
+      : { updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
+    await db.doc(`users/${uid}/sessions/${sid}`).update(nameUpdate);
+    if (nameUpdate.name) document.getElementById('currentChatName').textContent = nameUpdate.name;
+
+    // Show typing indicator
+    document.getElementById('emptyState').classList.add('hidden');
+    showTyping();
+
+    // Call backend
+    let reply;
+    try {
+      const ctrl = new AbortController();
+      const t    = setTimeout(() => ctrl.abort(), 95000);
+      const res  = await fetch(`${BACKEND}/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: uid, session_id: sid, message: text }),
+        signal: ctrl.signal,
+      });
+      clearTimeout(t);
+      if (!res.ok) throw new Error(`Server returned ${res.status}`);
+      const data = await res.json();
+      reply = data.reply || data.response || data.message || '(no response)';
+    } catch (err) {
+      reply = err.name === 'AbortError'
+        ? '⚠️ Orbit is taking a while to wake up (free Render tier can take ~50 s). Please try again in a moment.'
+        : `⚠️ Could not reach the Orbit server: ${err.message}`;
+    }
+
+    hideTyping();
+
+    // Save assistant turn
+    await db.collection(`users/${uid}/sessions/${sid}/messages`).add({
+      role: 'assistant', content: reply,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+
+  } catch (e) {
+    hideTyping();
+    toast('Error: ' + e.message, true);
+  } finally {
+    isBusy = false;
+    inp.dispatchEvent(new Event('input'));
+  }
+}
+
+// ── TYPING INDICATOR ──────────────────────────────────────────
+function showTyping() {
+  const inner = document.getElementById('msgInner');
+  const el = document.createElement('div');
+  el.id = 'typing';
+  el.className = 'msg assistant';
+  el.innerHTML = `
+    <div class="msg-label">
+      <svg width="11" height="11" viewBox="0 0 80 80" fill="none">
+        <circle cx="40" cy="40" r="28" stroke="currentColor" stroke-width="3" fill="none" opacity="0.5"/>
+        <circle cx="40" cy="40" r="10" fill="currentColor"/>
+      </svg>
+      Orbit
+    </div>
+    <div class="msg-bubble">
+      <div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+    </div>`;
+  inner.appendChild(el);
+  scrollBottom();
+}
+function hideTyping() { document.getElementById('typing')?.remove(); }
+
+// ── RENAME ────────────────────────────────────────────────────
+document.getElementById('editTitleBtn').onclick = () => {
+  if (activeSid) {
+    const s = sessions.find(x => x.id === activeSid);
+    openRename(activeSid, s?.name || '');
+  }
+};
+
+function openRename(sid, current) {
+  renameTarget = sid;
+  document.getElementById('renameInput').value = current;
+  openOverlay('renameOverlay');
+  setTimeout(() => document.getElementById('renameInput').select(), 60);
+}
+
+document.getElementById('renameCancelBtn').onclick = () => closeOverlay('renameOverlay');
+document.getElementById('renameOverlay').onclick   = e => { if (e.target.id === 'renameOverlay') closeOverlay('renameOverlay'); };
+document.getElementById('renameInput').onkeydown   = e => {
+  if (e.key === 'Enter')  document.getElementById('renameSaveBtn').click();
+  if (e.key === 'Escape') closeOverlay('renameOverlay');
+};
+
+document.getElementById('renameSaveBtn').onclick = async () => {
+  const name = document.getElementById('renameInput').value.trim();
+  if (!name || !renameTarget) { closeOverlay('renameOverlay'); return; }
+  try {
+    await db.doc(`users/${user.uid}/sessions/${renameTarget}`).update({ name });
+    if (renameTarget === activeSid)
+      document.getElementById('currentChatName').textContent = name;
+    closeOverlay('renameOverlay');
+  } catch (e) { toast('Rename failed: ' + e.message, true); }
+};
+
+// ── DELETE ────────────────────────────────────────────────────
+function openDelete(sid) {
+  deleteTarget = sid;
+  openOverlay('deleteOverlay');
+}
+
+document.getElementById('deleteCancelBtn').onclick  = () => closeOverlay('deleteOverlay');
+document.getElementById('deleteOverlay').onclick    = e => { if (e.target.id === 'deleteOverlay') closeOverlay('deleteOverlay'); };
+document.getElementById('deleteConfirmBtn').onclick = async () => {
+  if (!deleteTarget) { closeOverlay('deleteOverlay'); return; }
+  const sid = deleteTarget;
+  closeOverlay('deleteOverlay');
+  try {
+    const msgs = await db.collection(`users/${user.uid}/sessions/${sid}/messages`).get();
+    const batch = db.batch();
+    msgs.forEach(d => batch.delete(d.ref));
+    batch.delete(db.doc(`users/${user.uid}/sessions/${sid}`));
+    await batch.commit();
+
+    if (activeSid === sid) {
+      if (unsubMessages) { unsubMessages(); unsubMessages = null; }
+      activeSid = null;
+      document.getElementById('msgInner').innerHTML = '';
+      document.getElementById('emptyState').classList.remove('hidden');
+      document.getElementById('currentChatName').textContent = 'Select a chat';
+    }
+  } catch (e) { toast('Delete failed: ' + e.message, true); }
+};
+
+// ── OVERLAY HELPERS ───────────────────────────────────────────
+function openOverlay(id)  { document.getElementById(id).classList.add('open'); }
+function closeOverlay(id) { document.getElementById(id).classList.remove('open'); }
+
+// ── TOAST ─────────────────────────────────────────────────────
+let toastTimer;
+function toast(msg, isErr = false) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className   = 'show' + (isErr ? ' err' : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.className = ''; }, 3800);
+}
+</script>
 </body>
 </html>
