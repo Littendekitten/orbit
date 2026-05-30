@@ -71,17 +71,43 @@
         .chat-list-item:hover { background-color: #2a2b2d; }
         .chat-list-item.active { background-color: #004a77; color: #c2e7ff; }
 
-        .delete-btn {
+        .delete-btn, .rename-btn {
             cursor: pointer;
             opacity: 0.4;
             transition: 0.2s;
-            padding-left: 10px;
             user-select: none;
         }
-        .delete-btn:hover {
+        .delete-btn:hover, .rename-btn:hover {
             opacity: 1;
             transform: scale(1.2);
         }
+
+        .auth-section {
+            margin-top: auto;
+            padding-top: 15px;
+            border-top: 1px solid #333;
+            font-size: 0.9rem;
+        }
+        .auth-btn {
+            display: block;
+            background: #4285F4;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+        .auth-btn:hover { background: #357ae8; }
+        .logout-link {
+            color: #ff8a8a;
+            text-decoration: none;
+            font-size: 0.8rem;
+            display: inline-block;
+            margin-top: 5px;
+        }
+        .logout-link:hover { text-decoration: underline; }
 
         #main-content {
             flex-grow: 1;
@@ -162,7 +188,7 @@
             .new-chat-btn { font-size: 1.2rem; border-radius: 50%; padding: 10px; margin-bottom: 10px; }
             .new-chat-btn span { display: none; }
             .new-chat-btn::before { content: "+"; }
-            .chat-list-title, .chat-list-item { display: none; }
+            .chat-list-title, .chat-list-item, .auth-section { display: none; }
         }
     </style>
 </head>
@@ -172,6 +198,7 @@
         <div class="new-chat-btn" onclick="startNewChat()"><span>+ New chat</span></div>
         <div class="chat-list-title">Recent chats</div>
         <div id="chat-list"></div>
+        <div id="auth-section" class="auth-section"></div>
     </div>
 
     <div id="main-content">
@@ -193,6 +220,7 @@
         let activeChatId = localStorage.getItem('orbit_active_id') || null;
 
         window.onload = function() {
+            checkUserStatus();
             if (allChats.length === 0 || !activeChatId) {
                 startNewChat();
             } else {
@@ -200,6 +228,25 @@
                 loadChat(activeChatId);
             }
         };
+
+        async function checkUserStatus() {
+            const authSection = document.getElementById('auth-section');
+            try {
+                const response = await fetch(`${BACKEND_URL}/user`, { credentials: 'include' });
+                if (response.ok) {
+                    const data = await response.json();
+                    authSection.innerHTML = `
+                        <div>Logged in as:</div>
+                        <strong style="color: #8ab4f8;">${data.user.name}</strong>
+                        <br><a class="logout-link" href="${BACKEND_URL}/logout">Logout</a>
+                    `;
+                } else {
+                    authSection.innerHTML = `<a class="auth-btn" href="${BACKEND_URL}/login">Login with Google</a>`;
+                }
+            } catch (error) {
+                authSection.innerHTML = `<a class="auth-btn" href="${BACKEND_URL}/login">Login with Google</a>`;
+            }
+        }
 
         function startNewChat() {
             const newId = 'chat_' + Date.now();
@@ -229,10 +276,26 @@
                 listContainer.innerHTML += `
                     <div class="chat-list-item ${isActive}" onclick="loadChat('${chat.id}')">
                         <span class="title">${chat.title}</span>
-                        <span class="delete-btn" onclick="deleteChat('${chat.id}', event)" title="Delete chat">🗑️</span>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <span class="rename-btn" onclick="renameChat('${chat.id}', event)" title="Rename chat">✏️</span>
+                            <span class="delete-btn" onclick="deleteChat('${chat.id}', event)" title="Delete chat">🗑️</span>
+                        </div>
                     </div>
                 `;
             });
+        }
+
+        function renameChat(chatId, event) {
+            event.stopPropagation();
+            const chat = allChats.find(c => c.id === chatId);
+            if (!chat) return;
+            
+            const newTitle = prompt("Enter new chat title:", chat.title);
+            if (newTitle && newTitle.trim() !== "") {
+                chat.title = newTitle.trim();
+                saveToStorage();
+                renderSidebar();
+            }
         }
 
         function deleteChat(chatId, event) {
@@ -314,6 +377,7 @@
                         'Content-Type': 'application/json',
                         'ngrok-skip-browser-warning': 'true'
                     },
+                    credentials: 'include',
                     body: JSON.stringify({ history: currentChat.history })
                 });
 
