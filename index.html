@@ -87,11 +87,12 @@
             padding-top: 15px;
             border-top: 1px solid #333;
             font-size: 0.9rem;
+            text-align: center;
         }
         .auth-btn {
             display: block;
-            background: #4285F4;
-            color: white;
+            background: #e3e3e3;
+            color: #131314;
             text-align: center;
             padding: 10px;
             border-radius: 20px;
@@ -99,15 +100,19 @@
             font-weight: 600;
             transition: 0.2s;
         }
-        .auth-btn:hover { background: #357ae8; }
+        .auth-btn:hover { background: #fff; }
         .logout-link {
             color: #ff8a8a;
             text-decoration: none;
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             display: inline-block;
-            margin-top: 5px;
+            margin-top: 8px;
+            padding: 5px 10px;
+            border: 1px solid #ff8a8a;
+            border-radius: 15px;
+            transition: 0.2s;
         }
-        .logout-link:hover { text-decoration: underline; }
+        .logout-link:hover { background: #ff8a8a; color: #131314; }
 
         #main-content {
             flex-grow: 1;
@@ -175,21 +180,6 @@
             font-size: 1rem;
         }
         button.send-btn:hover { color: #aecbfa; }
-
-        .code-container { background: #1e1e1e; border-radius: 12px; margin: 12px 0; overflow: hidden; border: 1px solid #333; }
-        .code-header { background: #2d2d2d; padding: 8px 15px; display: flex; justify-content: space-between; align-items: center; color: #aaa; font-size: 0.8rem; }
-        .code-content { margin: 0; padding: 15px; overflow-x: auto; font-family: 'Consolas', monospace; font-size: 0.9rem; color: #d4d4d4; }
-        .copy-btn { background: transparent; color: #aaa; border: 1px solid #555; padding: 4px 8px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; }
-        .copy-btn:hover { background: #444; color: white; }
-        .copy-btn.copied { background: #8ab4f8; color: #131314; border-color: #8ab4f8; }
-
-        @media (max-width: 768px) {
-            #sidebar { width: 70px; padding: 8px; }
-            .new-chat-btn { font-size: 1.2rem; border-radius: 50%; padding: 10px; margin-bottom: 10px; }
-            .new-chat-btn span { display: none; }
-            .new-chat-btn::before { content: "+"; }
-            .chat-list-title, .chat-list-item, .auth-section { display: none; }
-        }
     </style>
 </head>
 <body>
@@ -198,7 +188,10 @@
         <div class="new-chat-btn" onclick="startNewChat()"><span>+ New chat</span></div>
         <div class="chat-list-title">Recent chats</div>
         <div id="chat-list"></div>
-        <div id="auth-section" class="auth-section"></div>
+        
+        <div id="auth-section" class="auth-section">
+            <span style="color: #888;">Checking login...</span>
+        </div>
     </div>
 
     <div id="main-content">
@@ -214,13 +207,14 @@
     </div>
 
     <script>
+        // Verander dit NIET, dit zorgt ervoor dat de API altijd goed wordt aangeroepen
         const BACKEND_URL = "https://roaming-travesty-retold.ngrok-free.dev";
         
         let allChats = JSON.parse(localStorage.getItem('orbit_chats')) || [];
         let activeChatId = localStorage.getItem('orbit_active_id') || null;
 
         window.onload = function() {
-            checkUserStatus();
+            checkUserStatus(); // Controleert direct of je bent ingelogd
             if (allChats.length === 0 || !activeChatId) {
                 startNewChat();
             } else {
@@ -229,17 +223,23 @@
             }
         };
 
+        // ====== INLOG CHECK ======
         async function checkUserStatus() {
             const authSection = document.getElementById('auth-section');
             try {
                 const response = await fetch(`${BACKEND_URL}/user`, { credentials: 'include' });
+                
                 if (response.ok) {
                     const data = await response.json();
-                    authSection.innerHTML = `
-                        <div>Logged in as:</div>
-                        <strong style="color: #8ab4f8;">${data.user.name}</strong>
-                        <br><a class="logout-link" href="${BACKEND_URL}/logout">Logout</a>
-                    `;
+                    if(data.logged_in) {
+                        authSection.innerHTML = `
+                            <div style="font-size: 0.85rem; color: #aaa;">Logged in as:</div>
+                            <strong style="color: #8ab4f8; font-size: 1rem;">${data.user.name}</strong><br>
+                            <a class="logout-link" href="${BACKEND_URL}/logout">Logout</a>
+                        `;
+                    } else {
+                        authSection.innerHTML = `<a class="auth-btn" href="${BACKEND_URL}/login">Login with Google</a>`;
+                    }
                 } else {
                     authSection.innerHTML = `<a class="auth-btn" href="${BACKEND_URL}/login">Login with Google</a>`;
                 }
@@ -248,13 +248,10 @@
             }
         }
 
+        // ====== CHAT LOGICA ======
         function startNewChat() {
             const newId = 'chat_' + Date.now();
-            const newChat = {
-                id: newId,
-                title: "New conversation",
-                history: []
-            };
+            const newChat = { id: newId, title: "New conversation", history: [] };
             allChats.unshift(newChat);
             activeChatId = newId;
             saveToStorage();
@@ -289,7 +286,6 @@
             event.stopPropagation();
             const chat = allChats.find(c => c.id === chatId);
             if (!chat) return;
-            
             const newTitle = prompt("Enter new chat title:", chat.title);
             if (newTitle && newTitle.trim() !== "") {
                 chat.title = newTitle.trim();
@@ -300,26 +296,14 @@
 
         function deleteChat(chatId, event) {
             event.stopPropagation(); 
-            
             if (!confirm("Are you sure you want to delete this chat?")) return;
-
             allChats = allChats.filter(c => c.id !== chatId);
-            
             if (activeChatId === chatId) {
-                if (allChats.length > 0) {
-                    activeChatId = allChats[0].id;
-                } else {
-                    activeChatId = null;
-                }
+                activeChatId = allChats.length > 0 ? allChats[0].id : null;
             }
-            
             saveToStorage();
-            
-            if (activeChatId) {
-                loadChat(activeChatId);
-            } else {
-                startNewChat();
-            }
+            if (activeChatId) loadChat(activeChatId);
+            else startNewChat();
         }
 
         function loadChat(chatId) {
@@ -332,7 +316,7 @@
             
             const currentChat = allChats.find(c => c.id === chatId);
             if (!currentChat || currentChat.history.length === 0) {
-                chatBox.innerHTML = `<div class="message bot-msg"><b>Orbit</b><br>Hello! I am ready for a new conversation. What shall we do?</div>`;
+                chatBox.innerHTML = `<div class="message bot-msg"><b>Orbit</b><br>Hello! I am ready for a new conversation.</div>`;
                 return;
             }
 
@@ -373,68 +357,33 @@
             try {
                 const response = await fetch(`${BACKEND_URL}/chat`, {
                     method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'ngrok-skip-browser-warning': 'true'
-                    },
-                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include', // Belangrijk: stuurt je login-sessie mee!
                     body: JSON.stringify({ history: currentChat.history })
                 });
 
+                if (response.status === 401) {
+                    chatBox.innerHTML += `<div class="message bot-msg" style="color:#ff8a8a;"><b>System</b><br>⚠️ Please login with Google first to chat!</div>`;
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                    currentChat.history.pop(); // Verwijder het bericht uit de geschiedenis
+                    return;
+                }
+
                 const data = await response.json();
-                
                 currentChat.history.push({ role: 'assistant', text: data.reply });
                 chatBox.innerHTML += `<div class="message bot-msg"><b>Orbit</b><br>${formatOrbitText(data.reply)}</div>`;
                 chatBox.scrollTop = chatBox.scrollHeight;
                 saveToStorage();
 
             } catch (error) {
-                chatBox.innerHTML += `<div class="message bot-msg" style="color:#ff8a8a;"><b>System Warning</b><br>Unable to connect to Orbit.</div>`;
+                chatBox.innerHTML += `<div class="message bot-msg" style="color:#ff8a8a;"><b>System Warning</b><br>Unable to connect to Orbit. Is the server running?</div>`;
                 chatBox.scrollTop = chatBox.scrollHeight;
             }
         }
 
         function formatOrbitText(text) {
-            const codeBlocks = [];
-            const codeRegex = /```([a-zA-Z]*)\n([\s\S]*?)```/g;
-            
-            let tempText = text.replace(codeRegex, function(match, language, code) {
-                codeBlocks.push({ language, code });
-                return `___CODEBLOCK_${codeBlocks.length - 1}___`;
-            });
-
-            tempText = tempText.replace(/\n/g, '<br>');
-
-            codeBlocks.forEach((block, index) => {
-                const langLabel = block.language ? block.language.toUpperCase() : 'CODE';
-                const safeCode = block.code.replace(/</g, '&lt;').replace(/>/g, '&gt;').trim();
-                const uniqueId = 'code-' + Math.random().toString(36).substr(2, 9);
-                
-                const codeHTML = `
-                    <div class="code-container">
-                        <div class="code-header">
-                            <span>${langLabel}</span>
-                            <button class="copy-btn" onclick="copyToClipboard('${uniqueId}', this)">Copy</button>
-                        </div>
-                        <pre class="code-content" id="${uniqueId}">${safeCode}</pre>
-                    </div>
-                `;
-                tempText = tempText.replace(`___CODEBLOCK_${index}___`, codeHTML);
-            });
-
-            return tempText;
-        }
-
-        function copyToClipboard(elementId, button) {
-            const codeText = document.getElementById(elementId).innerText;
-            navigator.clipboard.writeText(codeText).then(() => {
-                button.innerText = 'Copied!';
-                button.classList.add('copied');
-                setTimeout(() => {
-                    button.innerText = 'Copy';
-                    button.classList.remove('copied');
-                }, 2000);
-            });
+            let safeText = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return safeText.replace(/\n/g, '<br>');
         }
     </script>
 </body>
