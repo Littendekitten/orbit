@@ -1,0 +1,7 @@
+flask
+flask-cors
+huggingface_hub
+transformers
+torch
+firebase-admin
+gunicorn
