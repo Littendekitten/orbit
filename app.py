@@ -1,5 +1,6 @@
 import os
 import json
+import torch
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import firebase_admin
@@ -11,19 +12,23 @@ app = Flask(__name__)
 CORS(app) 
 
 # 1. Veilige Firebase koppeling
-# Render leest de JSON-tekst uit de Environment Variable 'FIREBASE_JSON'
 firebase_creds_dict = json.loads(os.getenv("FIREBASE_JSON"))
 cred = credentials.Certificate(firebase_creds_dict)
 firebase_admin.initialize_app(cred)
 db = firestore.client()
 
-# 2. Model laden
+# 2. Geoptimaliseerd model laden voor minder geheugengebruik
 HF_TOKEN = os.getenv("HF_TOKEN")
 model_path = snapshot_download(repo_id="Littendekitten/Orbit-Model", repo_type="dataset", token=HF_TOKEN)
 
-print("Orbit model wordt geladen...")
+print("Orbit model wordt zuinig geladen...")
+# We laden in float16 (half precisie) en gebruiken low_cpu_mem_usage om crashen te voorkomen
 tokenizer = AutoTokenizer.from_pretrained(model_path)
-model = AutoModelForCausalLM.from_pretrained(model_path)
+model = AutoModelForCausalLM.from_pretrained(
+    model_path, 
+    torch_dtype=torch.float16, 
+    low_cpu_mem_usage=True
+)
 
 @app.route('/chat', methods=['POST'])
 def chat():
@@ -45,7 +50,7 @@ def chat():
     
     return jsonify({"reply": reply})
 
-# 3. Server starten op de juiste poort voor Render
+# 3. Server starten (Render poort)
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
