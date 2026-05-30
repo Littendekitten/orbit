@@ -210,46 +210,58 @@
         // JOUW NGROK BACKEND URL
         const BACKEND_URL = "https://roaming-travesty-retold.ngrok-free.dev";
         
-        let allChats = JSON.parse(localStorage.getItem('orbit_chats')) || [];
-        let activeChatId = localStorage.getItem('orbit_active_id') || null;
+        // Globale variabelen die dynamisch worden ingevuld na de login-check
+        let allChats = [];
+        let activeChatId = null;
+        let currentUserEmail = "guest"; 
 
         window.onload = function() {
-            checkUserStatus(); 
-            if (allChats.length === 0 || !activeChatId) {
-                startNewChat();
-            } else {
-                renderSidebar();
-                loadChat(activeChatId);
-            }
+            // Start de gecombineerde login- en chat-initialisatie
+            checkUserStatusAndInitChats();
         };
 
-        // ====== INLOG CHECK (PRAAT MET NGROK) ======
-        async function checkUserStatus() {
+        // ====== INLOG CHECK & INITIALISATIE ======
+        async function checkUserStatusAndInitChats() {
             const authSection = document.getElementById('auth-section');
             try {
-                // 'credentials: include' is super belangrijk hier voor Cross-Origin sessies!
                 const response = await fetch(`${BACKEND_URL}/user`, { credentials: 'include' });
                 
                 if (response.ok) {
                     const data = await response.json();
                     if(data.logged_in) {
+                        // Gebruiker is ingelogd! Sla email op voor de unieke sleutel
+                        currentUserEmail = data.user.email;
                         authSection.innerHTML = `
                             <div style="font-size: 0.85rem; color: #aaa;">Logged in as:</div>
                             <strong style="color: #8ab4f8; font-size: 1rem;">${data.user.name}</strong><br>
                             <a class="logout-link" href="${BACKEND_URL}/logout">Logout</a>
                         `;
                     } else {
+                        currentUserEmail = "guest";
                         authSection.innerHTML = `<a class="auth-btn" href="${BACKEND_URL}/login">Login with Google</a>`;
                     }
                 } else {
+                    currentUserEmail = "guest";
                     authSection.innerHTML = `<a class="auth-btn" href="${BACKEND_URL}/login">Login with Google</a>`;
                 }
             } catch (error) {
+                currentUserEmail = "guest";
                 authSection.innerHTML = `<a class="auth-btn" href="${BACKEND_URL}/login">Login with Google</a>`;
+            }
+
+            // PAS HIERNA laden we de specifieke chats in voor deze gebruiker
+            allChats = JSON.parse(localStorage.getItem('orbit_chats_' + currentUserEmail)) || [];
+            activeChatId = localStorage.getItem('orbit_active_id_' + currentUserEmail) || null;
+
+            if (allChats.length === 0 || !activeChatId) {
+                startNewChat();
+            } else {
+                renderSidebar();
+                loadChat(activeChatId);
             }
         }
 
-        // ====== CHAT LOGICA ======
+        // ====== CHAT LOGICA (AANGEPAST VOOR USER KEYS) ======
         function startNewChat() {
             const newId = 'chat_' + Date.now();
             const newChat = { id: newId, title: "New conversation", history: [] };
@@ -261,8 +273,9 @@
         }
 
         function saveToStorage() {
-            localStorage.setItem('orbit_chats', JSON.stringify(allChats));
-            localStorage.setItem('orbit_active_id', activeChatId);
+            // Sla op met de unieke identifier van de huidige gebruiker/gast
+            localStorage.setItem('orbit_chats_' + currentUserEmail, JSON.stringify(allChats));
+            localStorage.setItem('orbit_active_id_' + currentUserEmail, activeChatId);
         }
 
         function renderSidebar() {
@@ -359,14 +372,14 @@
                 const response = await fetch(`${BACKEND_URL}/chat`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include', // Belangrijk: stuurt je login-sessie mee naar Ngrok
+                    credentials: 'include', 
                     body: JSON.stringify({ history: currentChat.history })
                 });
 
                 if (response.status === 401) {
                     chatBox.innerHTML += `<div class="message bot-msg" style="color:#ff8a8a;"><b>System</b><br>⚠️ Please login with Google first to chat!</div>`;
                     chatBox.scrollTop = chatBox.scrollHeight;
-                    currentChat.history.pop(); // Verwijder het bericht uit de geschiedenis
+                    currentChat.history.pop(); 
                     return;
                 }
 
