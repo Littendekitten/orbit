@@ -3,161 +3,368 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Orbit AI - Cloud Edition</title>
+    <title>Orbit AI 🌌</title>
     <style>
+        /* --- ALGEMENE STIJL --- */
+        :root {
+            --bg-color: #0b101e;
+            --panel-bg: rgba(26, 32, 53, 0.85);
+            --accent: #3b82f6;
+            --accent-glow: 0 0 15px rgba(59, 130, 246, 0.5);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #0f172a;
-            color: #f8fafc;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: radial-gradient(circle at top right, #1e293b, var(--bg-color));
+            color: var(--text-main);
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+        }
+
+        /* --- CONTAINER --- */
+        .container {
+            width: 95%;
+            max-width: 600px;
+            height: 85vh;
+            background: var(--panel-bg);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* --- LOGIN SCHERM --- */
+        #login-screen {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--bg-color);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
-            margin: 0;
+            z-index: 10;
+            transition: opacity 0.5s ease;
         }
-        #chat-container {
-            width: 90%;
-            max-width: 500px;
-            height: 70vh;
-            background-color: #1e293b;
-            border-radius: 12px;
+
+        .login-box {
+            text-align: center;
+            padding: 40px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .login-box h1 {
+            font-size: 2.5rem;
+            margin-bottom: 5px;
+            color: var(--accent);
+            text-shadow: var(--accent-glow);
+        }
+
+        .login-box input {
+            width: 80%;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(0,0,0,0.2);
+            color: white;
+            font-size: 1rem;
+            text-align: center;
+            outline: none;
+        }
+
+        .login-box input:focus {
+            border-color: var(--accent);
+            box-shadow: var(--accent-glow);
+        }
+
+        .login-box button {
+            margin-top: 20px;
+            padding: 12px 30px;
+            border-radius: 8px;
+            border: none;
+            background: var(--accent);
+            color: white;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: var(--accent-glow);
+            transition: transform 0.2s;
+        }
+
+        .login-box button:hover {
+            transform: scale(1.05);
+        }
+
+        /* --- CHAT SCHERM --- */
+        #chat-header {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            background: rgba(0,0,0,0.2);
             display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            justify-content: space-between;
+            align-items: center;
         }
+
+        #chat-header h2 { margin: 0; font-size: 1.2rem; color: var(--accent); }
+        #logout-btn { background: transparent; color: var(--text-muted); border: none; cursor: pointer; }
+        #logout-btn:hover { color: white; }
+
         #chat-window {
             flex: 1;
             padding: 20px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 15px;
         }
+
         .message {
-            padding: 10px 14px;
-            border-radius: 8px;
-            max-width: 70%;
+            padding: 12px 18px;
+            border-radius: 12px;
+            max-width: 75%;
+            line-height: 1.4;
+            animation: popIn 0.3s ease;
             word-wrap: break-word;
         }
-        .user {
-            background-color: #3b82f6;
+
+        @keyframes popIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .user-msg {
+            background: var(--accent);
             align-self: flex-end;
+            border-bottom-right-radius: 2px;
         }
-        .orbit {
-            background-color: #334155;
+
+        .orbit-msg {
+            background: rgba(255,255,255,0.1);
             align-self: flex-start;
+            border-bottom-left-radius: 2px;
         }
+
+        /* --- INPUT GEBIED --- */
         #input-area {
+            padding: 15px;
             display: flex;
-            padding: 10px;
-            background-color: #0f172a;
             gap: 10px;
+            background: rgba(0,0,0,0.3);
+            border-top: 1px solid rgba(255,255,255,0.05);
         }
-        input {
+
+        #input-area input {
             flex: 1;
-            padding: 12px;
-            border: none;
-            border-radius: 6px;
-            background-color: #1e293b;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(0,0,0,0.2);
             color: white;
+            font-size: 1rem;
             outline: none;
         }
-        button {
-            padding: 12px 20px;
-            background-color: #3b82f6;
-            color: white;
+
+        #input-area input:focus { border-color: var(--accent); }
+
+        #send-btn {
+            padding: 0 25px;
+            border-radius: 10px;
             border: none;
-            border-radius: 6px;
-            cursor: pointer;
+            background: var(--accent);
+            color: white;
             font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
         }
-        button:hover {
-            background-color: #2563eb;
+
+        #send-btn:hover { background: #2563eb; }
+
+        /* --- LAAD ANIMATIE --- */
+        .typing-indicator {
+            display: none;
+            align-self: flex-start;
+            background: rgba(255,255,255,0.05);
+            padding: 12px 18px;
+            border-radius: 12px;
+            border-bottom-left-radius: 2px;
+        }
+
+        .dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent);
+            margin: 0 3px;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+
+        .dot:nth-child(1) { animation-delay: -0.32s; }
+        .dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
         }
     </style>
 </head>
 <body>
 
-    <h1 style="color: #3b82f6;">Orbit AI 🚀</h1>
-    <p style="color: #94a3b8; font-size: 0.9rem;">Status: 24/7 Cloud Connected</p>
-
-    <div id="chat-container">
-        <div id="chat-window" id="chatWindow"></div>
-        <div id="input-area">
-            <input type="text" id="userInput" placeholder="Typ een bericht naar Orbit..." onkeypress="handleKeyPress(event)">
-            <button onclick="sendMessage()">Verzend</button>
+    <div class="container">
+        
+        <div id="login-screen">
+            <div class="login-box">
+                <h1>Orbit AI 🌌</h1>
+                <p style="color: #94a3b8;">Systeem Online. Identificeer jezelf.</p>
+                <input type="text" id="usernameInput" placeholder="Jouw roepnaam..." onkeypress="handleLoginPress(event)">
+                <button onclick="login()">Inloggen</button>
+            </div>
         </div>
+
+        <div id="chat-header">
+            <span style="font-size: 0.8rem; color: #94a3b8;">🟢 Cloud Verbonden</span>
+            <h2>Orbit AI</h2>
+            <button id="logout-btn" onclick="logout()">Uitloggen</button>
+        </div>
+
+        <div id="chat-window">
+            <div class="message orbit-msg">Welkom in de cockpit! Ik ben Orbit. Wat gaan we vandaag doen?</div>
+            <div class="typing-indicator" id="typingIndicator">
+                <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+            </div>
+        </div>
+
+        <div id="input-area">
+            <input type="text" id="userInput" placeholder="Verzend een commando..." onkeypress="handleKeyPress(event)" disabled>
+            <button id="send-btn" onclick="sendMessage()" disabled>🚀</button>
+        </div>
+
     </div>
 
     <script>
-        // ==========================================
-        // BELANGRiJK: Vervang deze URL straks met jouw echte Render URL!
-        // Bijvoorbeeld: "https://orbit-ai-server.onrender.com"
-        // ==========================================
-        const RENDER_URL = "HOOGNODIG_HIER_JE_RENDER_URL_PLAKKEN";
+        // JOUW LIVE RENDER SERVER!
+        const RENDER_URL = "https://orbit-wmuq.onrender.com";
+        let currentUser = "";
 
-        // Genereer een uniek ID voor deze gebruiker als die er nog niet is
-        let userId = localStorage.getItem('orbit_cloud_user_id');
-        if (!userId) {
-            userId = 'user_' + Math.random().toString(36).substr(2, 9);
-            localStorage.setItem('orbit_cloud_user_id', userId);
+        const loginScreen = document.getElementById('login-screen');
+        const chatWindow = document.getElementById('chat-window');
+        const usernameInput = document.getElementById('usernameInput');
+        const userInput = document.getElementById('userInput');
+        const sendBtn = document.getElementById('send-btn');
+        const typingIndicator = document.getElementById('typingIndicator');
+
+        // --- INLOGGEN ---
+        // Controleer of de gebruiker al was ingelogd
+        if (localStorage.getItem('orbit_username')) {
+            currentUser = localStorage.getItem('orbit_username');
+            showChat();
         }
 
-        const chatWindow = document.getElementById('chat-window');
+        function handleLoginPress(event) {
+            if (event.key === 'Enter') login();
+        }
 
+        function login() {
+            const name = usernameInput.value.trim();
+            if (name !== "") {
+                currentUser = name;
+                localStorage.setItem('orbit_username', currentUser);
+                showChat();
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('orbit_username');
+            currentUser = "";
+            userInput.disabled = true;
+            sendBtn.disabled = true;
+            loginScreen.style.opacity = '1';
+            loginScreen.style.pointerEvents = 'all';
+            
+            // Maak chat leeg (optioneel)
+            const messages = document.querySelectorAll('.message:not(:first-child)');
+            messages.forEach(msg => msg.remove());
+        }
+
+        function showChat() {
+            loginScreen.style.opacity = '0';
+            loginScreen.style.pointerEvents = 'none';
+            userInput.disabled = false;
+            sendBtn.disabled = false;
+            userInput.focus();
+        }
+
+        // --- CHAT LOGICA ---
         function appendMessage(text, sender) {
             const msgDiv = document.createElement('div');
-            msgDiv.classList.add('message', sender);
+            msgDiv.classList.add('message');
+            msgDiv.classList.add(sender === 'user' ? 'user-msg' : 'orbit-msg');
             msgDiv.innerText = text;
-            chatWindow.appendChild(msgDiv);
+            
+            // Voeg toe vóór de typing indicator
+            chatWindow.insertBefore(msgDiv, typingIndicator);
             chatWindow.scrollTop = chatWindow.scrollHeight;
         }
 
         function handleKeyPress(event) {
-            if (event.key === 'Enter') {
-                sendMessage();
-            }
+            if (event.key === 'Enter') sendMessage();
         }
 
         async function sendMessage() {
-            const inputField = document.getElementById('userInput');
-            const message = inputField.value.trim();
-            
+            const message = userInput.value.trim();
             if (message === "") return;
 
-            // Toon jouw bericht op het scherm
+            // 1. Toon user bericht
             appendMessage(message, 'user');
-            inputField.value = "";
-
-            if (RENDER_URL === "HOOGNODIG_HIER_JE_RENDER_URL_PLAKKEN") {
-                appendMessage("Systeemfout: Je moet de RENDER_URL nog aanpassen in de HTML-code!", 'orbit');
-                return;
-            }
+            userInput.value = "";
+            
+            // Zet input even uit tijdens het wachten
+            userInput.disabled = true;
+            sendBtn.disabled = true;
+            
+            // 2. Toon type animatie (Orbit denkt na)
+            typingIndicator.style.display = 'flex';
+            chatWindow.scrollTop = chatWindow.scrollHeight;
 
             try {
-                // Stuur het bericht naar de Render server
+                // 3. Stuur naar Render!
                 const response = await fetch(`${RENDER_URL}/chat`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        user_id: userId,
+                        user_id: currentUser, // Gebruikt nu je inlognaam!
                         message: message
                     })
                 });
 
                 const data = await response.json();
                 
-                // Toon het antwoord van Orbit
+                // Verberg animatie en toon antwoord
+                typingIndicator.style.display = 'none';
                 appendMessage(data.reply, 'orbit');
 
             } catch (error) {
-                console.error("Fout:", error);
-                appendMessage("Oeps! Ik kon geen verbinding maken met de cloud-server. Staat Render wel aan?", 'orbit');
+                console.error("Netwerk fout:", error);
+                typingIndicator.style.display = 'none';
+                appendMessage("Mijn connectie met de cloud is even verbroken! (Wakker worden duurt max 50 sec)", 'orbit');
             }
+
+            // Zet input weer aan
+            userInput.disabled = false;
+            sendBtn.disabled = false;
+            userInput.focus();
         }
     </script>
 </body>
