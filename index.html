@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,7 +15,6 @@
             overflow: hidden;
         }
 
-        /* --- SIDEBAR (Gemini Stijl) --- */
         #sidebar {
             width: 260px;
             background-color: #1e1f20;
@@ -58,15 +57,32 @@
             border-radius: 8px;
             cursor: pointer;
             font-size: 0.9rem;
+            transition: 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .chat-list-item span.title {
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            transition: 0.2s;
+            flex-grow: 1;
         }
         .chat-list-item:hover { background-color: #2a2b2d; }
         .chat-list-item.active { background-color: #004a77; color: #c2e7ff; }
 
-        /* --- MAIN CHAT AREA --- */
+        .delete-btn {
+            cursor: pointer;
+            opacity: 0.4;
+            transition: 0.2s;
+            padding-left: 10px;
+            user-select: none;
+        }
+        .delete-btn:hover {
+            opacity: 1;
+            transform: scale(1.2);
+        }
+
         #main-content {
             flex-grow: 1;
             display: flex;
@@ -88,7 +104,6 @@
             gap: 24px; 
         }
         
-        /* Berichten */
         .message { display: flex; flex-direction: column; line-height: 1.6; }
         .user-msg { 
             align-self: flex-end; 
@@ -101,7 +116,6 @@
         .bot-msg { align-self: flex-start; max-width: 100%; }
         .bot-msg b { color: #8ab4f8; font-size: 1.05rem; }
 
-        /* Input Balk */
         .input-container {
             padding: 20px;
             background: #131314;
@@ -136,7 +150,6 @@
         }
         button.send-btn:hover { color: #aecbfa; }
 
-        /* Code Blokken */
         .code-container { background: #1e1e1e; border-radius: 12px; margin: 12px 0; overflow: hidden; border: 1px solid #333; }
         .code-header { background: #2d2d2d; padding: 8px 15px; display: flex; justify-content: space-between; align-items: center; color: #aaa; font-size: 0.8rem; }
         .code-content { margin: 0; padding: 15px; overflow-x: auto; font-family: 'Consolas', monospace; font-size: 0.9rem; color: #d4d4d4; }
@@ -144,7 +157,6 @@
         .copy-btn:hover { background: #444; color: white; }
         .copy-btn.copied { background: #8ab4f8; color: #131314; border-color: #8ab4f8; }
 
-        /* Mobiel */
         @media (max-width: 768px) {
             #sidebar { width: 70px; padding: 8px; }
             .new-chat-btn { font-size: 1.2rem; border-radius: 50%; padding: 10px; margin-bottom: 10px; }
@@ -157,8 +169,8 @@
 <body>
 
     <div id="sidebar">
-        <div class="new-chat-btn" onclick="startNewChat()"><span>+ Nieuwe chat</span></div>
-        <div class="chat-list-title">Recente chats</div>
+        <div class="new-chat-btn" onclick="startNewChat()"><span>+ New chat</span></div>
+        <div class="chat-list-title">Recent chats</div>
         <div id="chat-list"></div>
     </div>
 
@@ -168,8 +180,8 @@
         
         <div class="input-container">
             <div class="input-area">
-                <input type="text" id="user-input" placeholder="Vraag Orbit iets..." onkeypress="handleEnter(event)" autocomplete="off">
-                <button class="send-btn" onclick="sendMessage()">Stuur</button>
+                <input type="text" id="user-input" placeholder="Ask Orbit anything..." onkeypress="handleEnter(event)" autocomplete="off">
+                <button class="send-btn" onclick="sendMessage()">Send</button>
             </div>
         </div>
     </div>
@@ -177,11 +189,9 @@
     <script>
         const BACKEND_URL = "https://roaming-travesty-retold.ngrok-free.dev";
         
-        // Laad alle chats uit de browser óf begin met een lege lijst
         let allChats = JSON.parse(localStorage.getItem('orbit_chats')) || [];
         let activeChatId = localStorage.getItem('orbit_active_id') || null;
 
-        // Start direct op bij laden
         window.onload = function() {
             if (allChats.length === 0 || !activeChatId) {
                 startNewChat();
@@ -195,10 +205,10 @@
             const newId = 'chat_' + Date.now();
             const newChat = {
                 id: newId,
-                title: "Nieuw gesprek",
+                title: "New conversation",
                 history: []
             };
-            allChats.unshift(newChat); // Zet bovenaan de lijst
+            allChats.unshift(newChat);
             activeChatId = newId;
             saveToStorage();
             renderSidebar();
@@ -218,10 +228,35 @@
                 const isActive = chat.id === activeChatId ? 'active' : '';
                 listContainer.innerHTML += `
                     <div class="chat-list-item ${isActive}" onclick="loadChat('${chat.id}')">
-                        🗑️ ${chat.title}
+                        <span class="title">${chat.title}</span>
+                        <span class="delete-btn" onclick="deleteChat('${chat.id}', event)" title="Delete chat">🗑️</span>
                     </div>
                 `;
             });
+        }
+
+        function deleteChat(chatId, event) {
+            event.stopPropagation(); 
+            
+            if (!confirm("Are you sure you want to delete this chat?")) return;
+
+            allChats = allChats.filter(c => c.id !== chatId);
+            
+            if (activeChatId === chatId) {
+                if (allChats.length > 0) {
+                    activeChatId = allChats[0].id;
+                } else {
+                    activeChatId = null;
+                }
+            }
+            
+            saveToStorage();
+            
+            if (activeChatId) {
+                loadChat(activeChatId);
+            } else {
+                startNewChat();
+            }
         }
 
         function loadChat(chatId) {
@@ -234,11 +269,10 @@
             
             const currentChat = allChats.find(c => c.id === chatId);
             if (!currentChat || currentChat.history.length === 0) {
-                chatBox.innerHTML = `<div class="message bot-msg"><b>Orbit</b><br>Hallo! Ik ben klaar voor een nieuw gesprek. Wat gaan we doen?</div>`;
+                chatBox.innerHTML = `<div class="message bot-msg"><b>Orbit</b><br>Hello! I am ready for a new conversation. What shall we do?</div>`;
                 return;
             }
 
-            // Herbouw het hele scherm op basis van de geschiedenis van deze chat
             currentChat.history.forEach(msg => {
                 if (msg.role === 'user') {
                     chatBox.innerHTML += `<div class="message user-msg">${msg.text}</div>`;
@@ -260,16 +294,13 @@
 
             if (!messageText) return;
 
-            // Zoek huidige chat op
             const currentChat = allChats.find(c => c.id === activeChatId);
             
-            // Als dit het eerste bericht is, verander de titel van de chat in de zijbalk
             if (currentChat.history.length === 0) {
                 currentChat.title = messageText.substring(0, 20) + (messageText.length > 20 ? '...' : '');
                 renderSidebar();
             }
 
-            // Update geschiedenis & UI voor User
             currentChat.history.push({ role: 'user', text: messageText });
             chatBox.innerHTML += `<div class="message user-msg">${messageText}</div>`;
             inputField.value = '';
@@ -277,7 +308,6 @@
             saveToStorage();
 
             try {
-                // Stuur de VOLLEDIGE geschiedenis van deze specifieke chat mee naar Flask
                 const response = await fetch(`${BACKEND_URL}/chat`, {
                     method: 'POST',
                     headers: { 
@@ -289,19 +319,17 @@
 
                 const data = await response.json();
                 
-                // Update geschiedenis & UI voor Orbit
                 currentChat.history.push({ role: 'assistant', text: data.reply });
                 chatBox.innerHTML += `<div class="message bot-msg"><b>Orbit</b><br>${formatOrbitText(data.reply)}</div>`;
                 chatBox.scrollTop = chatBox.scrollHeight;
                 saveToStorage();
 
             } catch (error) {
-                chatBox.innerHTML += `<div class="message bot-msg" style="color:#ff8a8a;"><b>Systeemwaarschuwing</b><br>Kan geen verbinding maken met Orbit.</div>`;
+                chatBox.innerHTML += `<div class="message bot-msg" style="color:#ff8a8a;"><b>System Warning</b><br>Unable to connect to Orbit.</div>`;
                 chatBox.scrollTop = chatBox.scrollHeight;
             }
         }
 
-        // --- CODE PARSER ---
         function formatOrbitText(text) {
             const codeBlocks = [];
             const codeRegex = /```([a-zA-Z]*)\n([\s\S]*?)```/g;
@@ -322,7 +350,7 @@
                     <div class="code-container">
                         <div class="code-header">
                             <span>${langLabel}</span>
-                            <button class="copy-btn" onclick="copyToClipboard('${uniqueId}', this)">Kopieer</button>
+                            <button class="copy-btn" onclick="copyToClipboard('${uniqueId}', this)">Copy</button>
                         </div>
                         <pre class="code-content" id="${uniqueId}">${safeCode}</pre>
                     </div>
@@ -336,10 +364,10 @@
         function copyToClipboard(elementId, button) {
             const codeText = document.getElementById(elementId).innerText;
             navigator.clipboard.writeText(codeText).then(() => {
-                button.innerText = 'Gekopieerd!';
+                button.innerText = 'Copied!';
                 button.classList.add('copied');
                 setTimeout(() => {
-                    button.innerText = 'Kopieer';
+                    button.innerText = 'Copy';
                     button.classList.remove('copied');
                 }, 2000);
             });
