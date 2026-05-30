@@ -207,14 +207,14 @@
     </div>
 
     <script>
-        // Verander dit NIET, dit zorgt ervoor dat de API altijd goed wordt aangeroepen
+        // JOUW NGROK BACKEND URL
         const BACKEND_URL = "https://roaming-travesty-retold.ngrok-free.dev";
         
         let allChats = JSON.parse(localStorage.getItem('orbit_chats')) || [];
         let activeChatId = localStorage.getItem('orbit_active_id') || null;
 
         window.onload = function() {
-            checkUserStatus(); // Controleert direct of je bent ingelogd
+            checkUserStatus(); 
             if (allChats.length === 0 || !activeChatId) {
                 startNewChat();
             } else {
@@ -223,10 +223,11 @@
             }
         };
 
-        // ====== INLOG CHECK ======
+        // ====== INLOG CHECK (PRAAT MET NGROK) ======
         async function checkUserStatus() {
             const authSection = document.getElementById('auth-section');
             try {
+                // 'credentials: include' is super belangrijk hier voor Cross-Origin sessies!
                 const response = await fetch(`${BACKEND_URL}/user`, { credentials: 'include' });
                 
                 if (response.ok) {
@@ -358,7 +359,7 @@
                 const response = await fetch(`${BACKEND_URL}/chat`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include', // Belangrijk: stuurt je login-sessie mee!
+                    credentials: 'include', // Belangrijk: stuurt je login-sessie mee naar Ngrok
                     body: JSON.stringify({ history: currentChat.history })
                 });
 
@@ -376,7 +377,7 @@
                 saveToStorage();
 
             } catch (error) {
-                chatBox.innerHTML += `<div class="message bot-msg" style="color:#ff8a8a;"><b>System Warning</b><br>Unable to connect to Orbit. Is the server running?</div>`;
+                chatBox.innerHTML += `<div class="message bot-msg" style="color:#ff8a8a;"><b>System Warning</b><br>Unable to connect to Orbit. Is the backend running?</div>`;
                 chatBox.scrollTop = chatBox.scrollHeight;
             }
         }
