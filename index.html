@@ -6,180 +6,58 @@
     <title>Orbit AI Dashboard</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; 
-            background-color: #131314; 
-            color: #e3e3e3; 
-            display: flex; 
-            height: 100vh; 
-            overflow: hidden;
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background-color: #131314; color: #e3e3e3; display: flex; height: 100vh; overflow: hidden; }
 
-        #sidebar {
-            width: 260px;
-            background-color: #1e1f20;
-            display: flex;
-            flex-direction: column;
-            padding: 15px;
-            border-right: 1px solid #333;
-            transition: 0.3s;
-        }
-        .new-chat-btn {
-            background: #2a2b2d;
-            color: #8ab4f8;
-            border: 1px solid #444;
-            padding: 12px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-weight: 600;
-            margin-bottom: 20px;
-            text-align: center;
-            transition: 0.2s;
-        }
+        /* Sidebar */
+        #sidebar { width: 260px; background-color: #1e1f20; display: flex; flex-direction: column; padding: 15px; border-right: 1px solid #333; }
+        .new-chat-btn { background: #2a2b2d; color: #8ab4f8; border: 1px solid #444; padding: 12px; border-radius: 25px; cursor: pointer; font-weight: 600; margin-bottom: 20px; text-align: center; }
         .new-chat-btn:hover { background: #333537; }
-        
-        .chat-list-title {
-            font-size: 0.8rem;
-            color: #aaa;
-            text-transform: uppercase;
-            margin-bottom: 10px;
-            padding-left: 5px;
-        }
-        #chat-list {
-            flex-grow: 1;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-        .chat-list-item {
-            padding: 10px 15px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: 0.2s;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .chat-list-item span.title {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            flex-grow: 1;
-        }
+        .chat-list-title { font-size: 0.8rem; color: #aaa; text-transform: uppercase; margin-bottom: 10px; padding-left: 5px; }
+        #chat-list { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; }
+        .chat-list-item { padding: 10px 15px; border-radius: 8px; cursor: pointer; font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center; }
+        .chat-list-item span.title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-grow: 1; }
         .chat-list-item:hover { background-color: #2a2b2d; }
         .chat-list-item.active { background-color: #004a77; color: #c2e7ff; }
+        .delete-btn, .rename-btn { cursor: pointer; opacity: 0.4; user-select: none; }
+        .delete-btn:hover, .rename-btn:hover { opacity: 1; transform: scale(1.2); }
 
-        .delete-btn, .rename-btn {
-            cursor: pointer;
-            opacity: 0.4;
-            transition: 0.2s;
-            user-select: none;
-        }
-        .delete-btn:hover, .rename-btn:hover {
-            opacity: 1;
-            transform: scale(1.2);
-        }
+        /* Settings Button */
+        .settings-btn-main { margin-top: auto; padding: 12px; background: transparent; color: #aaa; border: 1px solid #333; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .settings-btn-main:hover { background: #2a2b2d; color: #fff; }
 
-        .auth-section {
-            margin-top: auto;
-            padding-top: 15px;
-            border-top: 1px solid #333;
-            font-size: 0.9rem;
-            text-align: center;
-        }
-        .auth-btn {
-            display: block;
-            background: #e3e3e3;
-            color: #131314;
-            text-align: center;
-            padding: 10px;
-            border-radius: 20px;
-            text-decoration: none;
-            font-weight: 600;
-            transition: 0.2s;
-        }
-        .auth-btn:hover { background: #fff; }
-        .logout-link {
-            color: #ff8a8a;
-            text-decoration: none;
-            font-size: 0.85rem;
-            display: inline-block;
-            margin-top: 8px;
-            padding: 5px 10px;
-            border: 1px solid #ff8a8a;
-            border-radius: 15px;
-            transition: 0.2s;
-        }
-        .logout-link:hover { background: #ff8a8a; color: #131314; }
-
-        #main-content {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-        }
-        .header { 
-            padding: 18px 24px; 
-            font-size: 1.25rem; 
-            border-bottom: 1px solid #333; 
-            font-weight: 500;
-        }
-        #chat-box { 
-            flex-grow: 1; 
-            overflow-y: auto; 
-            padding: 24px; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 24px; 
-        }
-        
+        /* Main Chat Area */
+        #main-content { flex-grow: 1; display: flex; flex-direction: column; height: 100%; }
+        .header { padding: 18px 24px; font-size: 1.25rem; border-bottom: 1px solid #333; font-weight: 500; }
+        #chat-box { flex-grow: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 24px; }
         .message { display: flex; flex-direction: column; line-height: 1.6; }
-        .user-msg { 
-            align-self: flex-end; 
-            background-color: #303134; 
-            padding: 12px 20px; 
-            border-radius: 20px; 
-            border-bottom-right-radius: 4px;
-            max-width: 80%; 
-        }
+        .user-msg { align-self: flex-end; background-color: #303134; padding: 12px 20px; border-radius: 20px; border-bottom-right-radius: 4px; max-width: 80%; }
         .bot-msg { align-self: flex-start; max-width: 100%; }
         .bot-msg b { color: #8ab4f8; font-size: 1.05rem; }
 
-        .input-container {
-            padding: 20px;
-            background: #131314;
-        }
-        .input-area { 
-            max-width: 800px;
-            margin: 0 auto;
-            background-color: #1e1f20; 
-            border: 1px solid #444; 
-            border-radius: 30px; 
-            display: flex; 
-            align-items: center;
-            padding: 6px 15px;
-        }
-        input { 
-            flex: 1; 
-            background: transparent;
-            color: white; 
-            border: none;
-            padding: 12px; 
-            font-size: 1rem; 
-            outline: none; 
-        }
-        button.send-btn { 
-            background: transparent; 
-            color: #8ab4f8; 
-            border: none; 
-            font-weight: 600; 
-            cursor: pointer; 
-            padding: 0 10px;
-            font-size: 1rem;
-        }
-        button.send-btn:hover { color: #aecbfa; }
+        /* Input */
+        .input-container { padding: 20px; background: #131314; }
+        .input-area { max-width: 800px; margin: 0 auto; background-color: #1e1f20; border: 1px solid #444; border-radius: 30px; display: flex; align-items: center; padding: 6px 15px; }
+        input { flex: 1; background: transparent; color: white; border: none; padding: 12px; font-size: 1rem; outline: none; }
+        button.send-btn { background: transparent; color: #8ab4f8; border: none; font-weight: 600; cursor: pointer; padding: 0 10px; font-size: 1rem; }
+
+        /* SETTINGS MODAL */
+        #settings-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: #1e1f20; padding: 30px; border-radius: 12px; width: 400px; border: 1px solid #333; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .close-modal { cursor: pointer; color: #aaa; font-size: 1.5rem; font-weight: bold; }
+        .close-modal:hover { color: #fff; }
+        
+        .auth-block { text-align: center; margin-bottom: 20px; }
+        .auth-btn { display: inline-block; background: #e3e3e3; color: #131314; padding: 10px 20px; border-radius: 20px; text-decoration: none; font-weight: bold; margin-top: 10px; }
+        .logout-link { display: inline-block; color: #aaa; text-decoration: none; margin-top: 15px; border: 1px solid #555; padding: 6px 12px; border-radius: 12px; }
+        .logout-link:hover { color: #fff; border-color: #fff; }
+
+        .danger-zone { margin-top: 30px; padding: 15px; border: 1px solid #ff4a4a; border-radius: 8px; background: rgba(255, 74, 74, 0.05); }
+        .danger-zone h3 { color: #ff4a4a; font-size: 1rem; margin-bottom: 10px; }
+        .danger-zone p { font-size: 0.85rem; color: #aaa; margin-bottom: 15px; line-height: 1.4; }
+        .btn-danger { background: #ff4a4a; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; }
+        .btn-danger:hover { background: #d93838; }
+        .btn-danger:disabled { background: #555; cursor: not-allowed; }
     </style>
 </head>
 <body>
@@ -188,16 +66,12 @@
         <div class="new-chat-btn" onclick="startNewChat()"><span>+ New chat</span></div>
         <div class="chat-list-title">Recent chats</div>
         <div id="chat-list"></div>
-        
-        <div id="auth-section" class="auth-section">
-            <span style="color: #888;">Checking login...</span>
-        </div>
+        <button class="settings-btn-main" onclick="openSettings()">⚙️ Settings</button>
     </div>
 
     <div id="main-content">
         <div class="header">✨ Orbit AI</div>
         <div id="chat-box"></div>
-        
         <div class="input-container">
             <div class="input-area">
                 <input type="text" id="user-input" placeholder="Ask Orbit anything..." onkeypress="handleEnter(event)" autocomplete="off">
@@ -206,199 +80,182 @@
         </div>
     </div>
 
+    <div id="settings-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Settings</h2>
+                <span class="close-modal" onclick="closeSettings()">&times;</span>
+            </div>
+            
+            <div id="auth-section" class="auth-block">
+                <span style="color: #888;">Checking login status...</span>
+            </div>
+
+            <div id="danger-zone-section" class="danger-zone" style="display: none;">
+                <h3>Danger Zone</h3>
+                <p>Once you delete your account, there is no going back. All local chat data connected to your email will be wiped.</p>
+                <button id="delete-btn" class="btn-danger" onclick="requestAccountDeletion()">Delete Account</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // JOUW NGROK BACKEND URL
         const BACKEND_URL = "https://roaming-travesty-retold.ngrok-free.dev";
-        
-        // Globale variabelen die dynamisch worden ingevuld na de login-check
         let allChats = [];
         let activeChatId = null;
         let currentUserEmail = "guest"; 
 
-        window.onload = function() {
-            // Start de gecombineerde login- en chat-initialisatie
-            checkUserStatusAndInitChats();
-        };
+        window.onload = function() { checkUserStatusAndInitChats(); };
 
-        // ====== INLOG CHECK & INITIALISATIE ======
+        function openSettings() { document.getElementById('settings-modal').style.display = 'flex'; }
+        function closeSettings() { document.getElementById('settings-modal').style.display = 'none'; }
+
         async function checkUserStatusAndInitChats() {
             const authSection = document.getElementById('auth-section');
+            const dangerZone = document.getElementById('danger-zone-section');
             try {
                 const response = await fetch(`${BACKEND_URL}/user`, { credentials: 'include' });
-                
                 if (response.ok) {
                     const data = await response.json();
                     if(data.logged_in) {
-                        // Gebruiker is ingelogd! Sla email op voor de unieke sleutel
                         currentUserEmail = data.user.email;
                         authSection.innerHTML = `
-                            <div style="font-size: 0.85rem; color: #aaa;">Logged in as:</div>
-                            <strong style="color: #8ab4f8; font-size: 1rem;">${data.user.name}</strong><br>
+                            <p style="color: #aaa; margin-bottom:5px;">Logged in as:</p>
+                            <h3 style="color: #8ab4f8;">${data.user.name}</h3>
+                            <p style="font-size:0.8rem; color:#888;">${currentUserEmail}</p>
                             <a class="logout-link" href="${BACKEND_URL}/logout">Logout</a>
                         `;
+                        dangerZone.style.display = "block"; // Show danger zone
                     } else {
-                        currentUserEmail = "guest";
-                        authSection.innerHTML = `<a class="auth-btn" href="${BACKEND_URL}/login">Login with Google</a>`;
+                        setGuestMode(authSection, dangerZone);
                     }
                 } else {
-                    currentUserEmail = "guest";
-                    authSection.innerHTML = `<a class="auth-btn" href="${BACKEND_URL}/login">Login with Google</a>`;
+                    setGuestMode(authSection, dangerZone);
                 }
             } catch (error) {
-                currentUserEmail = "guest";
-                authSection.innerHTML = `<a class="auth-btn" href="${BACKEND_URL}/login">Login with Google</a>`;
+                setGuestMode(authSection, dangerZone);
             }
 
-            // PAS HIERNA laden we de specifieke chats in voor deze gebruiker
             allChats = JSON.parse(localStorage.getItem('orbit_chats_' + currentUserEmail)) || [];
             activeChatId = localStorage.getItem('orbit_active_id_' + currentUserEmail) || null;
 
-            if (allChats.length === 0 || !activeChatId) {
-                startNewChat();
-            } else {
-                renderSidebar();
-                loadChat(activeChatId);
-            }
+            if (allChats.length === 0 || !activeChatId) startNewChat();
+            else { renderSidebar(); loadChat(activeChatId); }
         }
 
-        // ====== CHAT LOGICA (AANGEPAST VOOR USER KEYS) ======
+        function setGuestMode(authSection, dangerZone) {
+            currentUserEmail = "guest";
+            authSection.innerHTML = `<a class="auth-btn" href="${BACKEND_URL}/login">Login with Google</a>`;
+            dangerZone.style.display = "none";
+        }
+
+        // --- ACCOUNT DELETION LOGICA ---
+        async function requestAccountDeletion() {
+            const btn = document.getElementById('delete-btn');
+            btn.innerText = "Sending email...";
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(`${BACKEND_URL}/request_delete`, {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    alert("A verification link has been sent to your email. Please check your inbox (and spam folder) to confirm account deletion.");
+                    closeSettings();
+                } else {
+                    alert("Failed to send email. Ensure the backend is configured correctly.");
+                }
+            } catch (e) {
+                alert("Cannot connect to server. Is it running?");
+            }
+
+            btn.innerText = "Delete Account";
+            btn.disabled = false;
+        }
+
+        // --- CHAT LOGICA (Hetzelfde gebleven) ---
         function startNewChat() {
             const newId = 'chat_' + Date.now();
-            const newChat = { id: newId, title: "New conversation", history: [] };
-            allChats.unshift(newChat);
+            allChats.unshift({ id: newId, title: "New conversation", history: [] });
             activeChatId = newId;
-            saveToStorage();
-            renderSidebar();
-            loadChat(newId);
+            saveToStorage(); renderSidebar(); loadChat(newId);
         }
-
         function saveToStorage() {
-            // Sla op met de unieke identifier van de huidige gebruiker/gast
             localStorage.setItem('orbit_chats_' + currentUserEmail, JSON.stringify(allChats));
             localStorage.setItem('orbit_active_id_' + currentUserEmail, activeChatId);
         }
-
         function renderSidebar() {
             const listContainer = document.getElementById('chat-list');
             listContainer.innerHTML = '';
-            
             allChats.forEach(chat => {
                 const isActive = chat.id === activeChatId ? 'active' : '';
                 listContainer.innerHTML += `
                     <div class="chat-list-item ${isActive}" onclick="loadChat('${chat.id}')">
                         <span class="title">${chat.title}</span>
-                        <div style="display: flex; gap: 10px; align-items: center;">
-                            <span class="rename-btn" onclick="renameChat('${chat.id}', event)" title="Rename chat">✏️</span>
-                            <span class="delete-btn" onclick="deleteChat('${chat.id}', event)" title="Delete chat">🗑️</span>
+                        <div style="display: flex; gap: 10px;">
+                            <span class="rename-btn" onclick="renameChat('${chat.id}', event)">✏️</span>
+                            <span class="delete-btn" onclick="deleteChat('${chat.id}', event)">🗑️</span>
                         </div>
-                    </div>
-                `;
+                    </div>`;
             });
         }
-
         function renameChat(chatId, event) {
             event.stopPropagation();
             const chat = allChats.find(c => c.id === chatId);
-            if (!chat) return;
             const newTitle = prompt("Enter new chat title:", chat.title);
-            if (newTitle && newTitle.trim() !== "") {
-                chat.title = newTitle.trim();
-                saveToStorage();
-                renderSidebar();
-            }
+            if (newTitle && newTitle.trim()) { chat.title = newTitle.trim(); saveToStorage(); renderSidebar(); }
         }
-
         function deleteChat(chatId, event) {
             event.stopPropagation(); 
-            if (!confirm("Are you sure you want to delete this chat?")) return;
+            if (!confirm("Delete this chat?")) return;
             allChats = allChats.filter(c => c.id !== chatId);
-            if (activeChatId === chatId) {
-                activeChatId = allChats.length > 0 ? allChats[0].id : null;
-            }
+            if (activeChatId === chatId) activeChatId = allChats.length > 0 ? allChats[0].id : null;
             saveToStorage();
-            if (activeChatId) loadChat(activeChatId);
-            else startNewChat();
+            if (activeChatId) loadChat(activeChatId); else startNewChat();
         }
-
         function loadChat(chatId) {
-            activeChatId = chatId;
-            renderSidebar();
-            saveToStorage();
-            
-            const chatBox = document.getElementById('chat-box');
-            chatBox.innerHTML = '';
-            
+            activeChatId = chatId; renderSidebar(); saveToStorage();
+            const chatBox = document.getElementById('chat-box'); chatBox.innerHTML = '';
             const currentChat = allChats.find(c => c.id === chatId);
             if (!currentChat || currentChat.history.length === 0) {
-                chatBox.innerHTML = `<div class="message bot-msg"><b>Orbit</b><br>Hello! I am ready for a new conversation.</div>`;
-                return;
+                chatBox.innerHTML = `<div class="message bot-msg"><b>Orbit</b><br>Hello! I am ready for a new conversation.</div>`; return;
             }
-
             currentChat.history.forEach(msg => {
-                if (msg.role === 'user') {
-                    chatBox.innerHTML += `<div class="message user-msg">${msg.text}</div>`;
-                } else {
-                    chatBox.innerHTML += `<div class="message bot-msg"><b>Orbit</b><br>${formatOrbitText(msg.text)}</div>`;
-                }
+                chatBox.innerHTML += `<div class="message ${msg.role === 'user' ? 'user-msg' : 'bot-msg'}">${msg.role === 'user' ? msg.text : '<b>Orbit</b><br>' + formatOrbitText(msg.text)}</div>`;
             });
             chatBox.scrollTop = chatBox.scrollHeight;
         }
-
-        function handleEnter(event) {
-            if (event.key === "Enter") sendMessage();
-        }
-
+        function handleEnter(event) { if (event.key === "Enter") sendMessage(); }
         async function sendMessage() {
             const inputField = document.getElementById('user-input');
             const chatBox = document.getElementById('chat-box');
             const messageText = inputField.value.trim();
-
             if (!messageText) return;
 
             const currentChat = allChats.find(c => c.id === activeChatId);
-            
-            if (currentChat.history.length === 0) {
-                currentChat.title = messageText.substring(0, 20) + (messageText.length > 20 ? '...' : '');
-                renderSidebar();
-            }
+            if (currentChat.history.length === 0) { currentChat.title = messageText.substring(0, 20) + '...'; renderSidebar(); }
 
             currentChat.history.push({ role: 'user', text: messageText });
             chatBox.innerHTML += `<div class="message user-msg">${messageText}</div>`;
-            inputField.value = '';
-            chatBox.scrollTop = chatBox.scrollHeight;
-            saveToStorage();
+            inputField.value = ''; chatBox.scrollTop = chatBox.scrollHeight; saveToStorage();
 
             try {
-                const response = await fetch(`${BACKEND_URL}/chat`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include', 
-                    body: JSON.stringify({ history: currentChat.history })
-                });
-
+                const response = await fetch(`${BACKEND_URL}/chat`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ history: currentChat.history }) });
                 if (response.status === 401) {
                     chatBox.innerHTML += `<div class="message bot-msg" style="color:#ff8a8a;"><b>System</b><br>⚠️ Please login with Google first to chat!</div>`;
-                    chatBox.scrollTop = chatBox.scrollHeight;
-                    currentChat.history.pop(); 
-                    return;
+                    chatBox.scrollTop = chatBox.scrollHeight; currentChat.history.pop(); return;
                 }
-
                 const data = await response.json();
                 currentChat.history.push({ role: 'assistant', text: data.reply });
                 chatBox.innerHTML += `<div class="message bot-msg"><b>Orbit</b><br>${formatOrbitText(data.reply)}</div>`;
-                chatBox.scrollTop = chatBox.scrollHeight;
-                saveToStorage();
-
+                chatBox.scrollTop = chatBox.scrollHeight; saveToStorage();
             } catch (error) {
-                chatBox.innerHTML += `<div class="message bot-msg" style="color:#ff8a8a;"><b>System Warning</b><br>Unable to connect to Orbit. Is the backend running?</div>`;
-                chatBox.scrollTop = chatBox.scrollHeight;
+                chatBox.innerHTML += `<div class="message bot-msg" style="color:#ff8a8a;"><b>System Warning</b><br>Unable to connect to Orbit.</div>`; chatBox.scrollTop = chatBox.scrollHeight;
             }
         }
-
-        function formatOrbitText(text) {
-            let safeText = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            return safeText.replace(/\n/g, '<br>');
-        }
+        function formatOrbitText(text) { return text.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>'); }
     </script>
 </body>
 </html>
