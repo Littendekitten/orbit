@@ -8,8 +8,18 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background-color: #131314; color: #e3e3e3; display: flex; height: 100vh; overflow: hidden; }
 
+        /* Welcome / Login Screen (Grijpt direct de aandacht als je niet bent ingelogd) */
+        #login-screen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #131314; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; text-align: center; padding: 20px; }
+        #login-screen h1 { font-size: 2.5rem; color: #fff; margin-bottom: 10px; font-weight: 600; }
+        #login-screen p { color: #aaa; margin-bottom: 30px; font-size: 1.1rem; max-width: 400px; line-height: 1.5; }
+        .login-page-btn { display: inline-block; background: #e3e3e3; color: #131314; padding: 14px 32px; border-radius: 25px; text-decoration: none; font-weight: bold; font-size: 1.1rem; transition: 0.2s; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+        .login-page-btn:hover { background: #fff; transform: translateY(-2px); }
+
+        /* App Layout (Staat standaard verborgen tot login check succesvol is) */
+        #app-layout { display: none; width: 100%; height: 100%; }
+
         /* Sidebar */
-        #sidebar { width: 260px; background-color: #1e1f20; display: flex; flex-direction: column; padding: 15px; border-right: 1px solid #333; }
+        #sidebar { width: 260px; background-color: #1e1f20; display: flex; flex-direction: column; padding: 15px; border-right: 1px solid #333; height: 100%; }
         .new-chat-btn { background: #2a2b2d; color: #8ab4f8; border: 1px solid #444; padding: 12px; border-radius: 25px; cursor: pointer; font-weight: 600; margin-bottom: 20px; text-align: center; }
         .new-chat-btn:hover { background: #333537; }
         .chat-list-title { font-size: 0.8rem; color: #aaa; text-transform: uppercase; margin-bottom: 10px; padding-left: 5px; }
@@ -26,8 +36,8 @@
         .settings-btn-main:hover { background: #2a2b2d; color: #fff; }
 
         /* Main Chat Area */
-        #main-content { flex-grow: 1; display: flex; flex-direction: column; height: 100%; }
-        .header { padding: 18px 24px; font-size: 1.25rem; border-bottom: 1px solid #333; font-weight: 500; }
+        #main-content { flex-grow: 1; display: flex; flex-direction: column; height: 100%; background-color: #131314; }
+        .header { padding: 18px 24px; font-size: 1.25rem; border-bottom: 1px solid #333; font-weight: 500; display: flex; justify-content: space-between; align-items: center; }
         #chat-box { flex-grow: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 24px; }
         .message { display: flex; flex-direction: column; line-height: 1.6; }
         .user-msg { align-self: flex-end; background-color: #303134; padding: 12px 20px; border-radius: 20px; border-bottom-right-radius: 4px; max-width: 80%; }
@@ -48,7 +58,6 @@
         .close-modal:hover { color: #fff; }
         
         .auth-block { text-align: center; margin-bottom: 20px; }
-        .auth-btn { display: inline-block; background: #e3e3e3; color: #131314; padding: 10px 20px; border-radius: 20px; text-decoration: none; font-weight: bold; margin-top: 10px; }
         .logout-link { display: inline-block; color: #aaa; text-decoration: none; margin-top: 15px; border: 1px solid #555; padding: 6px 12px; border-radius: 12px; }
         .logout-link:hover { color: #fff; border-color: #fff; }
 
@@ -62,20 +71,31 @@
 </head>
 <body>
 
-    <div id="sidebar">
-        <div class="new-chat-btn" onclick="startNewChat()"><span>+ New chat</span></div>
-        <div class="chat-list-title">Recent chats</div>
-        <div id="chat-list"></div>
-        <button class="settings-btn-main" onclick="openSettings()">⚙️ Settings</button>
+    <div id="login-screen">
+        <h1>✨ Orbit AI</h1>
+        <p>Welkom bij Orbit. Log in met je Google-account om toegang te krijgen tot je persoonlijke AI-assistent en chatgeschiedenis.</p>
+        <a class="login-page-btn" id="login-screen-link" href="#">Inloggen met Google</a>
     </div>
 
-    <div id="main-content">
-        <div class="header">✨ Orbit AI</div>
-        <div id="chat-box"></div>
-        <div class="input-container">
-            <div class="input-area">
-                <input type="text" id="user-input" placeholder="Ask Orbit anything..." onkeypress="handleEnter(event)" autocomplete="off">
-                <button class="send-btn" onclick="sendMessage()">Send</button>
+    <div id="app-layout">
+        <div id="sidebar">
+            <div class="new-chat-btn" onclick="startNewChat()"><span>+ New chat</span></div>
+            <div class="chat-list-title">Recent chats</div>
+            <div id="chat-list"></div>
+            <button class="settings-btn-main" onclick="openSettings()">⚙️ Settings</button>
+        </div>
+
+        <div id="main-content">
+            <div class="header">
+                <span>✨ Orbit AI</span>
+                <span id="user-display-header" style="font-size: 0.9rem; color: #8ab4f8;"></span>
+            </div>
+            <div id="chat-box"></div>
+            <div class="input-container">
+                <div class="input-area">
+                    <input type="text" id="user-input" placeholder="Ask Orbit anything..." onkeypress="handleEnter(event)" autocomplete="off">
+                    <button class="send-btn" onclick="sendMessage()">Send</button>
+                </div>
             </div>
         </div>
     </div>
@@ -88,12 +108,11 @@
             </div>
             
             <div id="auth-section" class="auth-block">
-                <span style="color: #888;">Checking login status...</span>
-            </div>
+                </div>
 
-            <div id="danger-zone-section" class="danger-zone" style="display: none;">
+            <div class="danger-zone">
                 <h3>Danger Zone</h3>
-                <p>Once you delete your account, there is no going back. All local chat data connected to your email will be wiped.</p>
+                <p>Als je je account verwijdert, sturen we een verificatielink naar je e-mail. Na bevestiging worden al je chats permanent gewist.</p>
                 <button id="delete-btn" class="btn-danger" onclick="requestAccountDeletion()">Delete Account</button>
             </div>
         </div>
@@ -103,7 +122,10 @@
         const BACKEND_URL = "https://roaming-travesty-retold.ngrok-free.dev";
         let allChats = [];
         let activeChatId = null;
-        let currentUserEmail = "guest"; 
+        let currentUserEmail = ""; 
+
+        // Zet de inloglink direct goed klaar
+        document.getElementById('login-screen-link').href = `${BACKEND_URL}/login`;
 
         window.onload = function() { checkUserStatusAndInitChats(); };
 
@@ -111,42 +133,62 @@
         function closeSettings() { document.getElementById('settings-modal').style.display = 'none'; }
 
         async function checkUserStatusAndInitChats() {
+            const loginScreen = document.getElementById('login-screen');
+            const appLayout = document.getElementById('app-layout');
             const authSection = document.getElementById('auth-section');
-            const dangerZone = document.getElementById('danger-zone-section');
+            const userDisplayHeader = document.getElementById('user-display-header');
+
             try {
                 const response = await fetch(`${BACKEND_URL}/user`, { credentials: 'include' });
                 if (response.ok) {
                     const data = await response.json();
                     if(data.logged_in) {
+                        // GEBRUIKER IS INGELOGD -> Toon de app!
                         currentUserEmail = data.user.email;
+                        
+                        // Verberg inlogscherm, toon dashboard
+                        loginScreen.style.display = "none";
+                        appLayout.style.display = "flex";
+
+                        // Update de naam rechtsboven in de header
+                        userDisplayHeader.innerText = `👤 ${data.user.name}`;
+
+                        // Vul de settings modal in
                         authSection.innerHTML = `
-                            <p style="color: #aaa; margin-bottom:5px;">Logged in as:</p>
+                            <p style="color: #aaa; margin-bottom:5px;">Ingelogd als:</p>
                             <h3 style="color: #8ab4f8;">${data.user.name}</h3>
                             <p style="font-size:0.8rem; color:#888;">${currentUserEmail}</p>
                             <a class="logout-link" href="${BACKEND_URL}/logout">Logout</a>
                         `;
-                        dangerZone.style.display = "block"; // Show danger zone
-                    } else {
-                        setGuestMode(authSection, dangerZone);
-                    }
-                } else {
-                    setGuestMode(authSection, dangerZone);
-                }
-            } catch (error) {
-                setGuestMode(authSection, dangerZone);
-            }
 
+                        // Laad nu pas de chats in voor deze specifieke gebruiker
+                        initChatSystem();
+                        return;
+                    }
+                }
+                // Niet ingelogd of server geeft fout -> Toon direct de "Welcome Wall"
+                showLoginWall(loginScreen, appLayout);
+            } catch (error) {
+                // Server offline of netwerkfout -> Toon ook de login muur
+                showLoginWall(loginScreen, appLayout);
+            }
+        }
+
+        function showLoginWall(loginScreen, appLayout) {
+            loginScreen.style.display = "flex";
+            appLayout.style.display = "none";
+        }
+
+        function initChatSystem() {
             allChats = JSON.parse(localStorage.getItem('orbit_chats_' + currentUserEmail)) || [];
             activeChatId = localStorage.getItem('orbit_active_id_' + currentUserEmail) || null;
 
-            if (allChats.length === 0 || !activeChatId) startNewChat();
-            else { renderSidebar(); loadChat(activeChatId); }
-        }
-
-        function setGuestMode(authSection, dangerZone) {
-            currentUserEmail = "guest";
-            authSection.innerHTML = `<a class="auth-btn" href="${BACKEND_URL}/login">Login with Google</a>`;
-            dangerZone.style.display = "none";
+            if (allChats.length === 0 || !activeChatId) {
+                startNewChat();
+            } else { 
+                renderSidebar(); 
+                loadChat(activeChatId); 
+            }
         }
 
         // --- ACCOUNT DELETION LOGICA ---
@@ -162,20 +204,20 @@
                 });
 
                 if (response.ok) {
-                    alert("A verification link has been sent to your email. Please check your inbox (and spam folder) to confirm account deletion.");
+                    alert("Er is een verificatielink naar je e-mail gestuurd. Controleer je inbox (en spam) om de verwijdering te bevestigen.");
                     closeSettings();
                 } else {
-                    alert("Failed to send email. Ensure the backend is configured correctly.");
+                    alert("Kon de e-mail niet verzenden. Controleer de backend configuratie.");
                 }
             } catch (e) {
-                alert("Cannot connect to server. Is it running?");
+                alert("Kan geen verbinding maken met de server.");
             }
 
             btn.innerText = "Delete Account";
             btn.disabled = false;
         }
 
-        // --- CHAT LOGICA (Hetzelfde gebleven) ---
+        // --- CHAT LOGICA ---
         function startNewChat() {
             const newId = 'chat_' + Date.now();
             allChats.unshift({ id: newId, title: "New conversation", history: [] });
@@ -183,6 +225,7 @@
             saveToStorage(); renderSidebar(); loadChat(newId);
         }
         function saveToStorage() {
+            if (!currentUserEmail) return;
             localStorage.setItem('orbit_chats_' + currentUserEmail, JSON.stringify(allChats));
             localStorage.setItem('orbit_active_id_' + currentUserEmail, activeChatId);
         }
@@ -244,8 +287,8 @@
             try {
                 const response = await fetch(`${BACKEND_URL}/chat`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ history: currentChat.history }) });
                 if (response.status === 401) {
-                    chatBox.innerHTML += `<div class="message bot-msg" style="color:#ff8a8a;"><b>System</b><br>⚠️ Please login with Google first to chat!</div>`;
-                    chatBox.scrollTop = chatBox.scrollHeight; currentChat.history.pop(); return;
+                    window.location.reload(); // Als de sessie plots verlopen is, ververs de pagina om de Login Wall te triggeren
+                    return;
                 }
                 const data = await response.json();
                 currentChat.history.push({ role: 'assistant', text: data.reply });
