@@ -7,10 +7,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
-  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
-
   <style>
     /* ─── TOKENS ─────────────────────────────────────────── */
     :root {
@@ -549,6 +545,13 @@
 <div id="toast" role="status" aria-live="polite"></div>
 
 <!-- ═══════════════════════════════════════════════════════════
+     FIREBASE SDK  (must load before main script)
+═══════════════════════════════════════════════════════════ -->
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
+
+<!-- ═══════════════════════════════════════════════════════════
      SCRIPT
 ═══════════════════════════════════════════════════════════ -->
 <script>
@@ -599,12 +602,13 @@
 
 // ── 1. CONFIGURE THESE ────────────────────────────────────────
 const firebaseConfig = {
-  apiKey:            "YOUR_WEB_API_KEY",            // ← Firebase Console → Project Settings → General
+  apiKey:            "AIzaSyA06crWT_q1TaM7sDsJB8h7S69h_y0Isl0",
   authDomain:        "orbit-ai-server.firebaseapp.com",
   projectId:         "orbit-ai-server",
   storageBucket:     "orbit-ai-server.firebasestorage.app",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",    // ← Firebase Console → Project Settings → General
-  appId:             "YOUR_APP_ID"                  // ← Firebase Console → Project Settings → General
+  messagingSenderId: "830786896130",
+  appId:             "1:830786896130:web:626dbfe1a24cd6e3f9c21b",
+  measurementId:     "G-M99SC1MS70"
 };
 
 const BACKEND = "https://orbit-wmuq.onrender.com";
