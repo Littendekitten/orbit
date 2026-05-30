@@ -8,17 +8,16 @@ from huggingface_hub import snapshot_download
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 app = Flask(__name__)
-CORS(app) # Zorgt ervoor dat je index.html veilig met de server kan praten
+CORS(app) 
 
-# 1. Veilige Firebase koppeling via Environment Variable (Render)
-# We halen de JSON-sleutel uit de instellingen van Render
+# 1. Veilige Firebase koppeling
+# Render leest de JSON-tekst uit de Environment Variable 'FIREBASE_JSON'
 firebase_creds_dict = json.loads(os.getenv("FIREBASE_JSON"))
 cred = credentials.Certificate(firebase_creds_dict)
 firebase_admin.initialize_app(cred)
 db = firestore.client()
 
-# 2. Model downloaden en laden
-# We gebruiken je token uit de Environment Variables
+# 2. Model laden
 HF_TOKEN = os.getenv("HF_TOKEN")
 model_path = snapshot_download(repo_id="Littendekitten/Orbit-Model", repo_type="dataset", token=HF_TOKEN)
 
@@ -37,7 +36,7 @@ def chat():
     outputs = model.generate(**inputs, max_new_tokens=100)
     reply = tokenizer.decode(outputs[0], skip_special_tokens=True)
     
-    # Opslaan in Firestore (je cloud database)
+    # Opslaan in Firestore
     db.collection('chats').document(user_id).collection('history').add({
         "message": message,
         "reply": reply,
@@ -46,7 +45,7 @@ def chat():
     
     return jsonify({"reply": reply})
 
+# 3. Server starten op de juiste poort voor Render
 if __name__ == '__main__':
-    # Render gebruikt poort 10000 of de poort die hij krijgt toegewezen
-    port = int(os.environ.get("PORT", 5000))
+    port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
